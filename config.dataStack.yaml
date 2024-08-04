@@ -1,0 +1,118 @@
+stripe:
+  trialPeriodInDays: 14
+  trialPeriodPlanId: vusoqngu3xht4x
+  webhookEndpointSubdomain-dev: "webhookdev"
+  webhookEndpointSubdomain-live: "webhooklive"
+  SubscriptionPlans: # this list is also used for populating dynamodb items as well
+  - name: Free
+    sortOrder: 5
+    id: Free
+    statementDescriptor: 'stationshq- Free' #this will appear on billing statements- max 22 characters in length
+    featureList: 'One User'
+    metadata: 
+      pricingSet: default
+      totalUsers: 1
+    price: 0 #anything with a price of 0 will not add a price record to stripe
+  - name: Basic
+    sortOrder: 10
+    id: w012xru2xsz99
+    statementDescriptor: 'stationshq- Basic Plan' #this will appear on billing statements- max 22 characters in length
+    featureList: 'One User'
+    metadata: 
+      pricingSet: default
+      totalUsers: 1
+    price: 299 
+  - name: Pro
+    sortOrder: 20
+    id: sdv556h7Hfyzo4 #unique id for each plan. live_ and dev_ prefixes wil be added, and will also be added to metadata so that Stripe payment_intents can be easily searched
+    statementDescriptor: 'stationshq- Pro Plan'
+    featureList: 'Three Users'
+    metadata: 
+      pricingSet: default
+      totalUsers: 3
+    price: 499
+  - name: Business
+    sortOrder: 30
+    id: vusoqngu3xht4x
+    statementDescriptor: 'stationshq- Biz Plan'
+    featureList: 'Five Users'
+    metadata: 
+      pricingSet: default
+      totalUsers: 5
+    price: 999
+  - name: Enterprise
+    sortOrder: 40
+    id: pcb58xb3mfuwxr
+    statementDescriptor: 'stationshq- Ent Plan'
+    featureList: 'Ten Users'
+    metadata: 
+      pricingSet: default
+      totalUsers: 10
+    price: 1999
+#  webhooksIpAddresses: # used for WAF or cloudfront viewer request lambda. currently hardcoded in the stacks/web/interface/gateway-lambdaUrl/cloudfrontViewerRequestLambdaFunction
+#    - 3.18.12.63
+#    - 3.130.192.231
+#    - 13.235.14.237
+#    - 13.235.122.149
+#    - 18.211.135.69
+#    - 35.154.171.200
+#    - 52.15.183.38
+#    - 54.88.130.119
+#    - 54.88.130.237
+#    - 54.187.174.169
+#    - 54.187.205.235
+#    - 54.187.216.72
+cognitoFromEmail: no-reply@ #.stationshq.io
+sfn:
+  logLevel: "ALL"
+cognito:
+  disableNewUsers: false
+  domain: ''
+  autoVerifiedAttributes:
+  - email
+  mfaConfiguration: OPTIONAL
+  explicitAuthFlows:
+  - ALLOW_ADMIN_USER_PASSWORD_AUTH
+  - ALLOW_USER_PASSWORD_AUTH
+  - ALLOW_USER_SRP_AUTH
+  - ALLOW_REFRESH_TOKEN_AUTH
+  passwordPolicy:
+    minimumLength: 8
+    requireLowercase: true
+    requireNumbers: true
+    requireSymbols: true
+    requireUppercase: true
+    temporaryPasswordValidityDays: 7
+  schema:
+  - name: email
+    attributeDataType: String
+    developerOnlyAttribute: false
+    mutable: true
+    required: true
+    stringAttributeConstraints:
+      maxLength: '255'
+      minLength: '5'
+  - name: phone_number
+    attributeDataType: String
+    developerOnlyAttribute: false
+    mutable: true
+    required: false
+    stringAttributeConstraints:
+      maxLength: '24'
+      minLength: '12'
+  - name: name #is actually tenant_id because cognito "name" field is searchable
+    attributeDataType: String
+    developerOnlyAttribute: false
+    mutable: true
+    required: false
+    stringAttributeConstraints:
+      maxLength: '64'
+      minLength: '10'
+  - name: tenant_name  ## not used- delete next new deployment
+    attributeDataType: String
+    developerOnlyAttribute: false
+    mutable: true
+    required: false
+    stringAttributeConstraints:
+      maxLength: '64'
+      minLength: '1'

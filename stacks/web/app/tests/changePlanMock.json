@@ -1,0 +1,228 @@
+{
+  "StateMachines": {
+    "changePlan": {
+      "TestCases": {
+        "HappyPath": {
+          "GetTenant": "GetTenantSuccess",
+          "GetTenantPlanFromPlanId": "GetTenantPlanFromPlanIdSuccess",
+          "GetNewPlan": "GetNewPlanSuccess",
+          "CognitoListUsers": "CognitoListUsersSuccess",
+          "GetListOfUsersToDeactivate": "GetListOfUsersToDeactivateSuccess",
+          "DisableUser": "DisableUserSuccess",
+          "StripeGetActiveSubscription": "StripeGetActiveSubscriptionSuccess",
+          "GetPriceFromPlanId": "GetPriceFromPlanIdSuccess",
+          "GetSubscription": "GetSubscriptionSuccess",
+          "ChangeSubscription": "ChangeSubscriptionSuccess",
+          "StripeUpdateAddSubscriptionMetadata": "StripeUpdateAddSubscriptionMetadataSuccess",
+          "UpdatePlan": "UpdatePlanSuccess"
+        }
+      }
+    }
+  },
+  "MockedResponses": {
+    "GetTenantSuccess": {
+      "0": {
+        "Return": {
+          "Item": {
+            "TrialPeriodDays": {
+              "N": "14"
+            },
+            "PlanId": {
+              "S": "dev_vusoqngu3xht4x"
+            },
+            "Id": {
+              "S": "e7223577-da80-4df7-82e4-2a6fd4a59ded"
+            },
+            "TrialPeriodTimestamp": {
+              "N": "1720209923"
+            },
+            "ProcessorCustomerId": {
+              "S": "cus_QQ8eMsEVoAyzji"
+            }
+          }
+        }
+      }
+    },
+    "GetTenantPlanFromPlanIdSuccess": {
+      "0": {
+        "Return": {
+          "Item": {
+            "StatementDescriptor": {
+              "S": "stationshq- Biz Plan"
+            },
+            "Price": {
+              "N": "999"
+            },
+            "Title": {
+              "S": "Business"
+            },
+            "FeatureList": {
+              "S": "Five Users"
+            },
+            "SortOrder": {
+              "N": "30"
+            },
+            "PriceSet": {
+              "S": "default"
+            },
+            "Id": {
+              "S": "dev_vusoqngu3xht4x"
+            },
+            "ProcessorPlanId": {
+              "S": "prod_NLncMCAijKNX6c"
+            },
+            "TotalUsers": {
+              "N": "5"
+            }
+          }
+        }
+      }
+    },
+    "GetNewPlanSuccess": {
+      "0": {
+        "Return": {
+          "Item": {
+            "StatementDescriptor": {
+              "S": "stationshq- Pro Plan"
+            },
+            "Price": {
+              "N": "499"
+            },
+            "Title": {
+              "S": "Pro"
+            },
+            "FeatureList": {
+              "S": "Three Users"
+            },
+            "SortOrder": {
+              "N": "20"
+            },
+            "PriceSet": {
+              "S": "default"
+            },
+            "Id": {
+              "S": "dev_sdv556h7Hfyzo4"
+            },
+            "ProcessorPlanId": {
+              "S": "prod_NLncLleOifj4uI"
+            },
+            "TotalUsers": {
+              "N": "3"
+            }
+          }
+        }
+      }
+    },
+    "CognitoListUsersSuccess": {
+      "0": {
+        "Return": {
+          "Users": [
+            {
+              "Enabled": true,
+              "Username": "accbea1b-b984-4652-91bd-41a4145340cf"
+            },
+            {
+              "Enabled": true,
+              "Username": "f96743b1-9011-44eb-b4b7-88fc882d03c6"
+            },
+            {
+              "Enabled": true,
+              "Username": "5d0c8617-28e4-4f73-9f5c-bae176e08abf"
+            },
+            {
+              
+              "Username": "8a00e28e-ccd9-49b4-87cf-d2740c82af4e"
+            },
+            {
+              "Enabled": true,
+              "Username": "fd31d14e-4039-4d5e-b193-ffee3149a7e9"
+            }
+          ]
+        }
+      }
+    },
+    "GetListOfUsersToDeactivateSuccess": {
+      "0": {
+        "Return": [
+          { "id": "fd31d14e-4039-4d5e-b193-ffee3149a7e9", "enabled": false },
+          { "id": "8a00e28e-ccd9-49b4-87cf-d2740c82af4e", "enabled": false }
+        ]
+      }
+    },
+    "DisableUserSuccess": {
+      "0": {
+        "Return": {
+          "Payload": "success"
+        }
+      }
+    },
+    "StripeGetActiveSubscriptionSuccess": {
+      "0": {
+        "Return": {
+          "Payload": {
+            "data": [
+              {
+                "id": "sub_1PZINj273xWW59pfEHoMHYI3"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "GetPriceFromPlanIdSuccess": {
+      "0": {
+        "Return": {
+          "Payload": {
+            "data": [
+              {
+                "id": "price_1Mb61C273xWW59pfXAl0YwHe"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "GetSubscriptionSuccess": {
+      "0": {
+        "Return": {
+          "Payload": {
+            "data": [
+              {
+                "id": "sub_1PZINj273xWW59pfEHoMHYI3",
+                "status": "trialing",
+                "items": {
+                  "data": [
+                    {
+                      "id": "si_QQ8f5WeRyTr1vE"
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    "ChangeSubscriptionSuccess": {
+      "0": {
+        "Return": {
+          "Payload": "success"
+        }
+      }
+    },
+    "StripeUpdateAddSubscriptionMetadataSuccess": {
+      "0": {
+        "Return": {
+          "Payload": "success"
+        }
+      }
+    },
+    "UpdatePlanSuccess": {
+      "0": {
+        "Return": {
+          "Payload": "success"
+        }
+      }
+    }
+  }
+}

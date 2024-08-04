@@ -1,0 +1,154 @@
+{
+    "StartAt" : "GetTenant",
+    "States" : {
+      "GetTenant": {
+        "Type": "Task",
+        "Resource": "arn:aws:states:::dynamodb:getItem",
+        "Parameters": {
+          "TableName": "${dataStackName}-Tenants",
+          "Key": {
+            "Id": {
+              "S.$": "$.identity.claims.name"
+            }
+          }
+        },
+        "Next": "CheckIfProcessorCustomerIdExists",
+        "ResultPath": "$.GetTenant"
+      },
+      "CheckIfProcessorCustomerIdExists": {
+        "Type": "Choice",
+        "Choices": [
+          {
+            "Variable": "$.GetTenant.Item.ProcessorCustomerId",
+            "IsPresent": true,
+            "Next": "ListProcessorPaymentMethods"
+          }
+        ],
+        "Default": "ProcessorCustomerIdNotFound"
+      },
+      "ProcessorCustomerIdNotFound": {
+        "Type": "Fail",
+        "Error": "ProcessorCustomerIdNotFound"
+      },
+      "ListProcessorPaymentMethods": {
+        "Type": "Task",
+        "Resource": "arn:aws:states:::lambda:invoke",
+        "Parameters": {
+          "Payload": {
+            "callback": "listCustomerPaymentMethods",
+            "customerId.$": "$.GetTenant.Item.ProcessorCustomerId.S",
+            "type": "card"
+          },
+          "FunctionName": "${stripeApiEntity}"
+        },
+        "Retry": [
+          {
+            "ErrorEquals": [
+              "Lambda.ServiceException",
+              "Lambda.AWSLambdaException",
+              "Lambda.SdkClientException",
+              "Lambda.TooManyRequestsException"
+            ],
+            "IntervalSeconds": 2,
+            "MaxAttempts": 6,
+            "BackoffRate": 2
+          }
+        ],
+        "Next": "GetProcessorCustomer",
+        "ResultPath": "$.listProcessorPaymentMethods"
+      },
+      "GetProcessorCustomer": {
+        "Type": "Task",
+        "Resource": "arn:aws:states:::lambda:invoke",
+        "Parameters": {
+          "FunctionName": "${stripeApiEntity}",
+          "Payload": {
+            "callback": "getCustomer",
+            "customerId.$": "$.GetTenant.Item.ProcessorCustomerId.S"
+          }
+        },
+        "Retry": [
+          {
+            "ErrorEquals": [
+              "Lambda.ServiceException",
+              "Lambda.AWSLambdaException",
+              "Lambda.SdkClientException",
+              "Lambda.TooManyRequestsException"
+            ],
+            "IntervalSeconds": 1,
+            "MaxAttempts": 3,
+            "BackoffRate": 2
+          }
+        ],
+        "Next": "CheckIfCustomerExists",
+        "ResultPath": "$.getProcessorCustomer"
+      },
+      "CheckIfCustomerExists": {
+        "Type": "Choice",
+        "Choices": [
+          {
+            "Variable": "$.getProcessorCustomer.StatusCode",
+            "NumericEquals": 400,
+            "Next": "ProcessorCustomerNotFound"
+          }
+        ],
+        "Default": "FormatProcessorPaymentMethodData"
+      },
+      "ProcessorCustomerNotFound": {
+        "Type": "Fail",
+        "Error": "ProcessorCustomerNotFound"
+      },
+      "FormatProcessorPaymentMethodData": {
+        "Type": "Map",
+        "ItemsPath": "$.listProcessorPaymentMethods.Payload.data",
+        "ItemSelector": {
+          "paymentMethod.$": "$$.Map.Item.Value",
+          "defaultPaymentId.$": "$.getProcessorCustomer.Payload.invoice_settings.default_payment_method"
+        },
+        "ItemProcessor": {
+          "ProcessorConfig": {
+            "Mode": "INLINE"
+          },
+          "StartAt": "CheckDefaultPaymentMethod",
+          "States": {
+            "CheckDefaultPaymentMethod": {
+              "Type": "Choice",
+              "Choices": [
+                {
+                  "Variable": "$.paymentMethod.id",
+                  "StringEqualsPath": "$.defaultPaymentId",
+                  "Next": "DefaultPaymentMethodIsTrue"
+                }
+              ],
+              "Default": "DefaultPaymentMethodIsFalse"
+            },
+            "DefaultPaymentMethodIsTrue": {
+              "Type": "Pass",
+              "ResultPath": "$.defaultPaymentMethod",
+              "Parameters": true,
+              "Next": "ReformatProcessorPaymentMethod"
+            },
+            "DefaultPaymentMethodIsFalse": {
+              "Type": "Pass",
+              "ResultPath": "$.defaultPaymentMethod",
+              "Parameters": false,
+              "Next": "ReformatProcessorPaymentMethod"
+            },
+            "ReformatProcessorPaymentMethod": {
+              "Type": "Pass",
+              "End": true,
+              "Parameters": {
+                "id.$": "$.paymentMethod.id",
+                "paymentType.$": "$.paymentMethod.type",
+                "expirationDate.$": "States.Format('{}/{}',$.paymentMethod.card.exp_month, $.paymentMethod.card.exp_year)",
+                "last4.$": "$.paymentMethod.card.last4",
+                "cardType.$": "$.paymentMethod.card.brand",
+                "default.$": "$.defaultPaymentMethod"
+              }
+            }
+          }
+        },
+        "End": true
+      }
+    }
+  }

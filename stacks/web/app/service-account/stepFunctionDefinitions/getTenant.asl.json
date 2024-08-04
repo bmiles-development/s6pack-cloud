@@ -1,0 +1,87 @@
+{
+    "StartAt" : "GetTenant",
+    "States" : {
+      "GetTenant": {
+        "Type": "Task",
+        "Resource": "arn:aws:states:::dynamodb:getItem",
+        "Parameters": {
+          "TableName": "${dataStackName}-Tenants",
+          "Key": {
+            "Id": {
+              "S.$": "$.identity.claims.name"
+            }
+          }
+        },
+        "Next": "CheckTrialPeriodTimestamp",
+        "ResultPath": "$.tenant"
+      },
+      "CheckTrialPeriodTimestamp": {
+          "Type": "Choice",
+          "Choices": [
+          {
+              "Variable": "$.tenant.Item.TrialPeriodTimestamp.N",
+              "IsPresent": false,
+              "Next": "SetNull"
+          }
+          ],
+          "Default": "CheckTrialPeriodDays"
+      },
+      "SetNull": {
+          "Type": "Pass",
+          "Next": "CheckTrialPeriodDays",
+          "Parameters": {
+          "N": null
+          },
+          "ResultPath": "$.tenant.Item.TrialPeriodTimestamp"
+      },
+      "CheckTrialPeriodDays": {
+          "Type": "Choice",
+          "Choices": [
+          {
+              "Variable": "$.tenant.Item.TrialPeriodDays.N",
+              "IsPresent": false,
+              "Next": "SetDaysToDefault"
+          }
+          ],
+          "Default": "CheckCancelPlanAtExists"
+      },
+      "SetDaysToDefault": {
+          "Type": "Pass",
+          "Next": "CheckCancelPlanAtExists",
+          "Parameters": {
+          "N": "${trialPeriodDays}"
+          },
+          "ResultPath": "$.tenant.Item.TrialPeriodDays"
+      },
+      "CheckCancelPlanAtExists": {
+          "Type": "Choice",
+          "Choices": [
+          {
+              "Variable": "$.tenant.Item.CancelPlanAt.N",
+              "IsPresent": false,
+              "Next": "CreateNullCancelPlanAtVariable"
+          }
+          ],
+          "Default": "PassTenant"
+      },
+      "CreateNullCancelPlanAtVariable": {
+          "Type": "Pass",
+          "Parameters": {
+            "N": null
+          },
+          "ResultPath": "$.tenant.Item.CancelPlanAt",
+          "Next": "PassTenant"
+      },
+      "PassTenant" : {
+        "Type": "Pass",
+        "End": true,
+        "Parameters": {
+            "id.$": "$.tenant.Item.Id.S",
+            "planId.$": "$.tenant.Item.PlanId.S",
+            "cancelPlanAt.$": "$.tenant.Item.CancelPlanAt.N",
+            "trialPeriodDays.$": "$.tenant.Item.TrialPeriodDays.N",
+            "trialPeriodTimestamp.$": "$.tenant.Item.TrialPeriodTimestamp.N"
+        }
+      }
+    }
+  }

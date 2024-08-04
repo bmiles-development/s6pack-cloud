@@ -1,0 +1,214 @@
+{
+    "StartAt" : "GetTenant",
+    "States" : {
+      "GetTenant": {
+        "Type": "Task",
+        "Resource": "arn:aws:states:::dynamodb:getItem",
+        "Parameters": {
+          "TableName": "${dataStackName}-Tenants",
+          "Key": {
+            "Id": {
+              "S.$": "$.identity.claims.name"
+            }
+          }
+        },
+        "Next": "GetTenantPlanFromPlanId",
+        "ResultPath": "$.tenant"
+      },
+      "GetTenantPlanFromPlanId": {
+        "Type": "Task",
+        "Resource": "arn:aws:states:::dynamodb:getItem",
+        "Parameters": {
+          "TableName": "${dataStackName}-PricePlans",
+          "Key": {
+            "Id": {
+              "S.$": "$.tenant.Item.PlanId.S"
+            }
+          }
+        },
+        "Next": "GetNewTenantPlan",
+        "ResultPath": "$.tenant.Plan"
+      },
+      "GetNewTenantPlan": {
+        "Type": "Task",
+        "Resource": "arn:aws:states:::dynamodb:getItem",
+        "Parameters": {
+          "TableName": "${dataStackName}-PricePlans",
+          "Key": {
+            "Id": {
+              "S.$": "$.arguments.planId"
+            }
+          }
+        },
+        "Next": "CheckNewPlanDetailsWereFound",
+        "ResultPath": "$.tenantNewPlanDetails"
+      },
+      "CheckNewPlanDetailsWereFound": {
+        "Type": "Choice",
+        "Choices": [
+          {
+            "Not": {
+              "Variable": "$.tenantNewPlanDetails.Item.ProcessorPlanId.S",
+              "IsPresent": true
+            },
+            "Next": "Fail-PlanIdDoesNotExist"
+          }
+        ],
+        "Default": "CheckIfPaidPlanExists"
+      },
+      "Fail-PlanIdDoesNotExist": {
+        "Type": "Fail",
+        "Error": "PlanIdDoesNotExist",
+        "Cause": "Incorrect PlanId entered."
+      },
+      "CheckIfPaidPlanExists": {
+        "Type": "Choice",
+        "Choices": [
+          {
+            "Variable": "$.tenant.Plan.Item.Id.S",
+            "StringEquals": "${freePlanDBKey}", 
+            "Next": "CheckIfProcessorCustomerIdExists"
+          }
+        ],
+        "Default": "FailPaidPlanExists"
+      },
+      "FailPaidPlanExists": {
+        "Type": "Fail",
+        "Error": "PaidPlanExists",
+        "Cause": "Use changePlan mutation if user already purchased a plan."
+      },
+      "CheckIfProcessorCustomerIdExists": {
+        "Type": "Choice",
+        "Choices": [
+            {
+              "Not": {
+                "Variable": "$.tenant.Item.ProcessorCustomerId.S",
+                "IsPresent": true
+              },
+              "Next":  "CreateProcessorCustomer"
+            }
+        ],
+        "Default": "ConvergeCustomerIdPath"
+      },
+      "ConvergeCustomerIdPath": {
+        "Type": "Pass",
+        "Next": "GetPriceFromPlanId",
+        "ResultPath": "$.processorCustomerData.Payload",
+        "Parameters": {
+          "id.$": "$.tenant.Item.ProcessorCustomerId.S"
+        }
+      },
+      "CreateProcessorCustomer": {
+        "Type": "Task",
+        "Resource": "arn:aws:states:::lambda:invoke",
+        "Parameters": {
+          "FunctionName": "${stripeApiEntity}",
+          "Payload": {
+            "callback": "createCustomer",
+            "email.$": "$.identity.claims.email",
+            "tenantId.$": "$.identity.claims.name"
+          }
+        },
+        "Retry": [
+          {
+            "ErrorEquals": [
+              "Lambda.ServiceException",
+              "Lambda.AWSLambdaException",
+              "Lambda.SdkClientException",
+              "Lambda.TooManyRequestsException"
+            ],
+            "IntervalSeconds": 2,
+            "MaxAttempts": 6,
+            "BackoffRate": 2
+          }
+        ],
+        "Next": "UpdateUserWithNewProcessorCustomerId",
+        "ResultPath": "$.processorCustomerData"
+      },
+      "UpdateUserWithNewProcessorCustomerId": {
+        "Type": "Task",
+        "Resource": "arn:aws:states:::dynamodb:updateItem",
+        "Parameters": {
+          "TableName": "${dataStackName}-Tenants",
+          "Key": {
+            "Id": {
+              "S.$": "$.identity.claims.name"
+            }
+          },
+          "UpdateExpression": "SET ProcessorCustomerId = :myValueRef",
+          "ExpressionAttributeValues": {
+            ":myValueRef": {"S.$": "$.processorCustomerData.Payload.id"}
+          }
+        },
+        "ResultPath": "$.GetTenant",
+        "Next": "GetPriceFromPlanId"
+      },
+      "GetPriceFromPlanId": {
+        "Comment": "Get Plan Price object from Stripe",
+        "Type": "Task",
+        "Resource": "arn:aws:states:::lambda:invoke",
+        "ResultPath": "$.getPriceFromPlanId",
+        "Parameters": {
+          "FunctionName": "${stripeApiEntity}",
+          "Payload": {
+            "callback": "getPriceFromProductId",
+            "productId.$": "$.tenantNewPlanDetails.Item.ProcessorPlanId.S"
+          }
+        },
+        "Retry": [
+          {
+            "ErrorEquals": [
+              "Lambda.ServiceException",
+              "Lambda.AWSLambdaException",
+              "Lambda.SdkClientException",
+              "Lambda.TooManyRequestsException"
+            ],
+            "IntervalSeconds": 2,
+            "MaxAttempts": 6,
+            "BackoffRate": 2
+          }
+        ],
+        "Next": "CreatePlanIntent"
+      },
+      "CreatePlanIntent": {
+        "Comment": "Create a setupIntent in stripe top pay for trial later",
+        "Type": "Task",
+        "Resource": "arn:aws:states:::lambda:invoke",
+        "ResultPath": "$.createdSetupIntent",
+        "Parameters": {
+          "FunctionName": "${stripeApiEntity}",
+          "Payload": {
+            "callback": "createPaymentMethodIntent",
+            "customerId.$": "$.processorCustomerData.Payload.id",
+            "metadata": {
+              "planId.$" : "$.tenantNewPlanDetails.Item.Id.S", 
+              "userId.$": "$.identity.claims.sub"
+            }
+          }
+        },
+        "Retry": [
+          {
+            "ErrorEquals": [
+              "Lambda.ServiceException",
+              "Lambda.AWSLambdaException",
+              "Lambda.SdkClientException",
+              "Lambda.TooManyRequestsException"
+            ],
+            "IntervalSeconds": 2,
+            "MaxAttempts": 6,
+            "BackoffRate": 2
+          }
+        ],
+        "Next" : "PassSetupIntent"
+      },
+      "PassSetupIntent" : {
+        "Type": "Pass",
+        "End": true,
+        "Parameters": {
+          "clientSecret.$": "$.createdSetupIntent.Payload.client_secret",
+          "planId.$": "$.tenantNewPlanDetails.Item.ProcessorPlanId.S",
+          "setupIntent" : true
+        }
+      }
+    }
+  }

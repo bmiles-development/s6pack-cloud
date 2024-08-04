@@ -1,0 +1,17 @@
+*.d.ts
+./*.js
+node_modules
+cdktf.out
+cdktf.log
+.gen
+.env
+.env.console
+.terraform
+tsconfig.tsbuildinfo
+!jest.config.js
+!setup.js
+*.tfstate
+*.tfstate.*
+terraform.*
+tests/coverage/*
+tests/coverage

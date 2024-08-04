@@ -1,0 +1,108 @@
+{
+  "StartAt": "GetTenant",
+  "States": {
+    "GetTenant": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::dynamodb:getItem",
+      "Parameters": {
+        "TableName": "${dataStackName}-Tenants",
+        "Key": {
+          "Id": {
+            "S.$": "$.identity.claims.name"
+          }
+        }
+      },
+      "Next": "ListPlans",
+      "ResultPath": "$.Tenant"
+    },
+    "ListPlans": {
+      "Type": "Task",
+      "Next": "ListInvoices",
+      "Resource": "arn:aws:states:::aws-sdk:dynamodb:query",
+      "Parameters": {
+        "ExpressionAttributeValues": {
+          ":s": { "S": "default" },
+          ":e": { "N": "0" }
+        },
+        "IndexName": "PriceSetIndex",
+        "KeyConditionExpression": "PriceSet = :s AND SortOrder > :e",
+        "ScanIndexForward": true,
+        "TableName": "${dataStackName}-PricePlans"
+      },
+      "ResultPath": "$.listPlans"
+    },
+    "ListInvoices": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": {
+        "FunctionName": "${stripeApiEntity}",
+        "Payload": {
+          "callback": "listInvoices",
+          "customerId.$": "$.Tenant.Item.ProcessorCustomerId.S"
+        }
+      },
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException",
+            "Lambda.TooManyRequestsException"
+          ],
+          "IntervalSeconds": 1,
+          "MaxAttempts": 3,
+          "BackoffRate": 2
+        }
+      ],
+      "Next": "FormatResults",
+      "ResultPath": "$.listInvoices",
+      "ResultSelector": { "invoices.$": "$.Payload.data" }
+    },
+    "FormatResults": {
+      "Type": "Map",
+      "ItemsPath": "$.listInvoices.invoices",
+      "Parameters": {
+        "listPlans.$": "$.listPlans",
+        "InvoiceNumber.$": "$$.Map.Item.Index",
+        "InvoiceDetail.$": "$$.Map.Item.Value"
+      },
+      "Iterator": {
+        "StartAt": "GetPlanIdByProcessorPlanId",
+        "States": {
+          "GetPlanIdByProcessorPlanId": {
+            "Type": "Task",
+            "Resource": "arn:aws:states:::lambda:invoke",
+            "ResultPath": "$.selectedPlanId",
+            "Parameters": {
+              "FunctionName": "${selectPlanIdByProcessorPlanIdFunction}",
+              "Payload": {
+                "dbPlanList.$": "$.listPlans.Items",
+                "processorPlanId.$": "$.InvoiceDetail.lines.data[0].plan.product"
+              }
+            },
+            "Next": "FormatInvoices"
+          },
+          "FormatInvoices": {
+            "Type": "Pass",
+            "End": true,
+            "Parameters": {
+              "id.$": "$.InvoiceDetail.lines.data[0].id",
+              "amountPaid.$": "$.InvoiceDetail.amount_paid",
+              "amountDue.$": "$.InvoiceDetail.amount_due",
+              "planAmount.$": "$.InvoiceDetail.lines.data[0].amount",
+              "amountRemaining.$": "$.InvoiceDetail.amount_remaining",
+              "planId.$": "$.selectedPlanId.Payload.Plan.Id.S",
+              "description.$": "$.InvoiceDetail.lines.data[0].description",
+              "periodStart.$": "$.InvoiceDetail.lines.data[0].period.start",
+              "periodEnd.$": "$.InvoiceDetail.lines.data[0].period.end",
+              "pdfUrl.$": "$.InvoiceDetail.invoice_pdf",
+              "number.$": "$.InvoiceDetail.number",
+              "startingBalance.$": "$.InvoiceDetail.starting_balance"
+            }
+          }
+        }
+      },
+      "End": true
+    }
+  }
+}

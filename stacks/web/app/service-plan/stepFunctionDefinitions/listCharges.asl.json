@@ -1,0 +1,116 @@
+{
+    "StartAt": "GetTenantAndListCharges",
+    "States": {
+      "GetTenantAndListCharges": {
+        "Type": "Task",
+        "Comment": "Get ProcessorCustomerId and pass to Payment Processor",
+        "Resource": "arn:aws:states:::dynamodb:getItem",
+        "Next": "ListChargesFromProcessor",
+        "Parameters": {
+          "TableName": "${dataStackName}-Tenants",
+          "Key": {
+            "Id": {
+              "S.$": "$.identity.claims.name"
+            }
+          }
+        },
+        "ResultPath": "$.Tenant"
+      },
+      "ListChargesFromProcessor": {
+        "Type": "Task",
+        "Resource": "arn:aws:states:::lambda:invoke",
+        "OutputPath": "$.Payload",
+        "Parameters": {
+          "FunctionName": "${stripeApiEntity}",
+          "Payload": {
+            "callback": "listCharges",
+            "input.$": "$.arguments.input",
+            "limit.$": "$.arguments.limit",
+            "customer.$": "$.Tenant.Item.ProcessorCustomerId.S"
+          }
+        },
+        "Retry": [
+          {
+            "ErrorEquals": [
+              "Lambda.ServiceException",
+              "Lambda.AWSLambdaException",
+              "Lambda.SdkClientException",
+              "Lambda.TooManyRequestsException"
+            ],
+            "IntervalSeconds": 2,
+            "MaxAttempts": 6,
+            "BackoffRate": 2
+          }
+        ],
+        "Next": "CheckForErrors"
+      },
+      "CheckForErrors": {
+        "Type": "Choice",
+        "Choices": [
+          {
+            "And": [
+              {
+                "Variable": "$.error.message.raw.param",
+                "IsPresent": true
+              },
+              {
+                "Variable": "$.error.message.raw.param",
+                "StringEquals": "customer"
+              }
+            ],
+            "Next": "ProcessorCustomerDoesNotExist"
+          },
+          {
+            "And": [
+              {
+                "Variable": "$.error",
+                "IsPresent": true
+              },
+              {
+                "Variable": "$.statusCode",
+                "NumericEquals": 400
+              }
+            ],
+            "Next": "LambdaCommandNotFound"
+          }
+        ],
+        "Default": "MapProcessorChargesData"
+      },
+      "LambdaCommandNotFound": {
+        "Type": "Fail",
+        "Error": "LambdaCommandNotFound"
+      },
+      "ProcessorCustomerDoesNotExist": {
+        "Type": "Fail",
+        "Error": "ProcessorCustomerDoesNotExist"
+      },
+      "MapProcessorChargesData": {
+        "Type": "Map",
+        "ItemProcessor": {
+          "ProcessorConfig": {
+            "Mode": "INLINE"
+          },
+          "StartAt": "FilterProcessorChargesData",
+          "States": {
+            "FilterProcessorChargesData": {
+              "Type": "Pass",
+              "End": true,
+              "Parameters": {
+                "Id.$": "$.id",
+                "Paid.$": "$.paid",
+                "Created.$": "$.created",
+                "Amount.$": "$.amount_captured",
+                "RefundedAmount.$": "$.amount_refunded",
+                "PaymentType.$": "$.payment_method_details.card.brand",
+                "Last4.$": "$.payment_method_details.card.last4",
+                "Refunded.$": "$.refunded",
+                "FailureMessage.$": "$.failure_message"
+              }
+            }
+          }
+        },
+        "End": true,
+        "ItemsPath": "$.body.charges.data"
+      }
+    }  
+  }

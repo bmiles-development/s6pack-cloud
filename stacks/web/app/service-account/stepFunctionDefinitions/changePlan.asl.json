@@ -1,0 +1,461 @@
+{
+  "StartAt": "GetTenant",
+  "States": {
+    "GetTenant": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::dynamodb:getItem",
+      "Parameters": {
+        "TableName": "${dataStackName}-Tenants",
+        "Key": {
+          "Id": {
+            "S.$": "$.identity.claims.name"
+          }
+        }
+      },
+      "Next": "GetTenantPlanFromPlanId",
+      "ResultPath": "$.tenant"
+    },
+    "GetTenantPlanFromPlanId": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::dynamodb:getItem",
+      "Parameters": {
+        "TableName": "${dataStackName}-PricePlans",
+        "Key": {
+          "Id": {
+            "S.$": "$.tenant.Item.PlanId.S"
+          }
+        }
+      },
+      "Next": "GetNewPlan",
+      "ResultPath": "$.tenant.Plan"
+    },
+    "GetNewPlan": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::dynamodb:getItem",
+      "Parameters": {
+        "TableName": "${dataStackName}-PricePlans",
+        "Key": {
+          "Id": {
+            "S.$": "$.arguments.planId"
+          }
+        }
+      },
+      "Next": "CheckNewPlanDetailsWereFound",
+      "ResultPath": "$.tenantNewPlanDetails"
+    },
+    "CheckNewPlanDetailsWereFound": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "Not": {
+            "Variable": "$.tenantNewPlanDetails.Item.ProcessorPlanId.S",
+            "IsPresent": true
+          },
+          "Next": "Fail-PlanIdDoesNotExist"
+        }
+      ],
+      "Default": "CheckIfEitherPlanIsFree"
+    },
+    "Fail-PlanIdDoesNotExist": {
+      "Type": "Fail",
+      "Error": "PlanIdDoesNotExist",
+      "Cause": "Incorrect PlanId entered."
+    },
+    "CheckIfEitherPlanIsFree": {
+      "Comment": "If customer is downgrading to a free plan from a paid plan, then within Stripe the paid plan simply needs to be cancelled",
+      "Type": "Choice",
+      "Choices": [
+        {
+          "Variable": "$.tenantNewPlanDetails.Item.Id.S",
+          "StringEquals": "${freePlanDBKey}",
+          "Next": "FailNewPlanIsFree"
+        },
+        {
+          "Variable": "$.tenant.Plan.Item.Id.S",
+          "StringEquals": "${freePlanDBKey}",
+          "Next": "FailCurrentPlanIsFree"
+        }
+      ],
+      "Default": "CheckIfNewPlanIsSameAsTheOldPlan"
+    },
+    "FailCurrentPlanIsFree": {
+      "Type": "Fail",
+      "Error": "CurrentPlanIsFreePlan",
+      "Cause": "Use createPlanIntent mutation if current plan is free."
+    },
+    "FailNewPlanIsFree": {
+      "Type": "Fail",
+      "Error": "NewPlanIsFreePlan",
+      "Cause": "Must use changePlan mutation or cancelPlan mutation if downgrading to free plan."
+    },
+    "CheckIfNewPlanIsSameAsTheOldPlan": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "Variable": "$.tenantNewPlanDetails.Item.Id.S",
+          "StringEqualsPath": "$.tenant.Plan.Item.Id.S",
+          "Next": "NewPlanIsSameAsTheOldPlan"
+        }
+      ],
+      "Default": "CognitoListUsersFilter"
+    },
+    "NewPlanIsSameAsTheOldPlan": {
+      "Type": "Fail",
+      "Error": "NewPlanIsSameAsTheOldPlan"
+    },
+    "CognitoListUsersFilter": {
+      "Type": "Pass",
+      "Next": "CognitoListUsers",
+      "ResultPath": "$.filter",
+      "Result": {
+        "template": "name = '{}'"
+      }
+    },
+    "CognitoListUsers": {
+      "Type": "Task",
+      "Next": "FilterActiveUsers",
+      "Parameters": {
+        "UserPoolId": "${cognitoEntity}",
+        "Filter.$": "States.Format($.filter.template, $.identity.claims.name)"
+      },
+      "Resource": "arn:aws:states:::aws-sdk:cognitoidentityprovider:listUsers",
+      "ResultPath": "$.cognitoListUsers"
+    },
+    "FilterActiveUsers": {
+      "Type": "Pass",
+      "ResultPath": "$.cognitoListUsers.Users",
+      "InputPath": "$.cognitoListUsers.Users[?(@.Enabled == true)]",
+      "Next": "CountActiveUsers"
+    },
+    "CountActiveUsers": {
+      "Type": "Pass",
+      "Next": "CheckTotalActiveUsers",
+      "Parameters": {
+        "totalUsers.$": "States.ArrayLength($.cognitoListUsers.Users)"
+      },
+      "ResultPath": "$.activeUsers"
+    },
+    "CheckTotalActiveUsers": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "Variable": "$.activeUsers.totalUsers",
+          "NumericGreaterThanPath": "$.tenantNewPlanDetails.Item.TotalUsers.N",
+          "Next": "Subtraction"
+        }
+      ],
+      "Default": "StripeGetActiveSubscription"
+    },
+    "Subtraction": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "ResultPath": "$.changePlanUsers",
+      "ResultSelector": {
+        "difference.$": "$.Payload"
+      },
+      "Parameters": {
+        "FunctionName": "${subtractionFunctionArn}",
+        "Payload": {
+          "firstNumber.$": "$.activeUsers.totalUsers",
+          "secondNumber.$": "$.tenantNewPlanDetails.Item.TotalUsers.N"
+        }
+      },
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException",
+            "Lambda.TooManyRequestsException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 6,
+          "BackoffRate": 2
+        }
+      ],
+      "Next": "CheckIfNeedToDisableUsers"
+    },
+    "CheckIfNeedToDisableUsers": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "Variable": "$.changePlanUsers.difference",
+          "NumericLessThan": 0,
+          "Next": "DummyDisabledUserData"
+        }
+      ],
+      "Default": "GetListOfUsersToDeactivate"
+    },
+    
+    "DummyDisabledUserData": {
+      "Type": "Pass",
+      "Next": "StripeGetActiveSubscription",
+      "ResultPath": "$.disabledUsersSuccess",
+      "Result": []
+    },
+    "GetListOfUsersToDeactivate": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "ResultPath": "$.disableUsers",
+      "ResultSelector": {
+        "list.$": "$.Payload.body"
+      },
+      "Parameters": {
+        "FunctionName": "${filterUsersToDeactivateFunctionFunctionArn}",
+        "Payload": {
+          "activeUsersVsNewPlanDifference.$": "$.changePlanUsers.difference",
+          "currentUserId.$": "$.identity.claims.sub",
+          "users.$": "$.cognitoListUsers.Users"
+        }
+      },
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException",
+            "Lambda.TooManyRequestsException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 6,
+          "BackoffRate": 2
+        }
+      ],
+      "Next": "DisableUsers"
+    },
+    "DisableUsers": {
+      "Type": "Map",
+      "ItemsPath": "$.disableUsers.list",
+      "Iterator": {
+        "StartAt": "DisableUser",
+        "States": {
+          "DisableUser": {
+            "Type": "Task",
+            "Resource": "arn:aws:states:::aws-sdk:cognitoidentityprovider:adminDisableUser",
+            "Parameters": {
+              "Username.$": "$.Username",
+              "UserPoolId": "${cognitoEntity}"
+            },
+            "Next": "ReformatUserData",
+            "ResultPath": "$.disableUserSuccess"
+          },
+          "ReformatUserData": {
+            "Type": "Pass",
+            "End": true,
+            "Parameters": {
+              "id.$": "$.Username",
+              "enabled": false
+            }
+          }
+        }
+      },
+      "ResultPath": "$.disabledUsersSuccess",
+      "Next": "StripeGetActiveSubscription"
+    },
+    "StripeGetActiveSubscription": {
+      "Comment": "Get Customer Active Subscription object from Stripe",
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "ResultPath": "$.processorSubscriptionData",
+      "Parameters": {
+        "FunctionName": "${stripeApiEntity}",
+        "Payload": {
+          "callback": "getActiveCustomerSubscription",
+          "customerId.$": "$.tenant.Item.ProcessorCustomerId.S"
+        }
+      },
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException",
+            "Lambda.TooManyRequestsException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 6,
+          "BackoffRate": 2
+        }
+      ],
+      "Next": "CheckIfStripeSubscriptionExists"
+    },
+    "CheckIfStripeSubscriptionExists": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "Not": {
+            "Variable": "$.processorSubscriptionData.Payload.data[0].id",
+            "IsPresent": true
+          },
+          "Next": "FailStripeSubscriptionNotFound"
+        }
+      ],
+      "Default": "GetPriceFromPlanId"
+    },
+    "FailStripeSubscriptionNotFound": {
+      "Type": "Fail",
+      "Error": "SubscriptionNotFound",
+      "Cause": "Subscription Not Found - Incorrect PlanId"
+    },
+    "GetPriceFromPlanId": {
+      "Comment": "Get Plan Price object from Stripe",
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "ResultPath": "$.getPriceFromPlanId",
+      "Parameters": {
+        "FunctionName": "${stripeApiEntity}",
+        "Payload": {
+          "callback": "getPriceFromProductId",
+          "productId.$": "$.tenantNewPlanDetails.Item.ProcessorPlanId.S"
+        }
+      },
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException",
+            "Lambda.TooManyRequestsException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 6,
+          "BackoffRate": 2
+        }
+      ],
+      "Next": "GetSubscription"
+    },
+    "GetSubscription": {
+      "Type": "Task",
+      "Comment": "Get Current Processor Subscription",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": {
+        "FunctionName": "${stripeApiEntity}",
+        "Payload": {
+          "callback": "getCustomerSubscription",
+          "customerId.$": "$.tenant.Item.ProcessorCustomerId.S"
+        }
+      },
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException",
+            "Lambda.TooManyRequestsException"
+          ],
+          "IntervalSeconds": 1,
+          "MaxAttempts": 3,
+          "BackoffRate": 2
+        }
+      ],
+      "Next": "ParseJsonPaths",
+      "ResultPath": "$.GetCurrentProcessorSubscription"
+    },
+    "ParseJsonPaths": {
+      "Type": "Pass",
+      "Next": "ChangeSubscription",
+      "ResultPath": "$.SubscriptionData",
+      "Parameters": {
+        "subscriptionId.$": "$.GetCurrentProcessorSubscription.Payload.data[?(@.status==trialing || @.status==active)].id",
+        "subscriptionItemId.$": "$.GetCurrentProcessorSubscription.Payload.data[?(@.status==trialing || @.status==active)].items.data[0].id"
+      }
+    },
+    "ChangeSubscription": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "ResultPath": "$.ChangeSubscription",
+      "Parameters": {
+        "FunctionName": "${stripeApiEntity}",
+        "Payload": {
+          "callback": "changeSubscription",
+          "customerId.$": "$.tenant.Item.ProcessorCustomerId.S",
+          "currentSubscriptionId.$": "$.SubscriptionData.subscriptionId[0]",
+          "currentSubscriptionItemId.$": "$.SubscriptionData.subscriptionItemId[0]",
+          "newProductPriceId.$": "$.getPriceFromPlanId.Payload.data[0].id"
+        }
+      },
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException",
+            "Lambda.TooManyRequestsException"
+          ],
+          "IntervalSeconds": 1,
+          "MaxAttempts": 3,
+          "BackoffRate": 2
+        }
+      ],
+      "Next": "StripeUpdateAddSubscriptionMetadata"
+    },
+    "StripeUpdateAddSubscriptionMetadata": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "ResultPath": "$.SubscriptionUpdatedMetadata",
+      "Parameters": {
+        "FunctionName": "${stripeApiEntity}",
+        "Payload": {
+          "callback": "updateSubscriptionMetadata",
+          "planId.$": "$.SubscriptionData.subscriptionId[0]",
+          "metadata": {
+            "customerId.$": "$.tenant.Item.ProcessorCustomerId.S",
+            "planId.$": "$.tenantNewPlanDetails.Item.Id.S",
+            "tenantId.$": "$.identity.claims.name"
+          }
+        }
+      },
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException",
+            "Lambda.TooManyRequestsException"
+          ],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 6,
+          "BackoffRate": 2
+        }
+      ],
+      "Next": "UpdatePlan"
+    },
+    "UpdatePlan": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::dynamodb:updateItem",
+      "ResultPath": "$.updatePlan",
+      "Parameters": {
+        "TableName": "${dataStackName}-Tenants",
+        "Key": {
+          "Id": {
+            "S.$": "$.identity.claims.name"
+          }
+        },
+        "UpdateExpression": "SET PlanId = :planId REMOVE CancelPlanAt",
+        "ExpressionAttributeValues": {
+          ":planId": { "S.$": "$.tenantNewPlanDetails.Item.Id.S" }
+        }
+      },
+      "Next": "Success"
+    },
+    "Success": {
+      "Type": "Pass",
+      "End": true,
+      "Parameters": {
+        "id.$": "$.identity.claims.name",
+        "cancelPlanAt": null,
+        "planId.$": "$.tenantNewPlanDetails.Item.Id.S",
+        "plan.id.$": "$.tenantNewPlanDetails.Item.Id.S",
+        "plan.statementDescriptor.$": "$.tenantNewPlanDetails.Item.StatementDescriptor.S",
+        "plan.price.$": "$.tenantNewPlanDetails.Item.Price.N",
+        "plan.title.$": "$.tenantNewPlanDetails.Item.Title.S",
+        "plan.featureList.$": "$.tenantNewPlanDetails.Item.FeatureList.S",
+        "plan.sortOrder.$": "$.tenantNewPlanDetails.Item.SortOrder.N",
+        "plan.priceSet.$": "$.tenantNewPlanDetails.Item.PriceSet.S",
+        "plan.processorPlanId.$": "$.tenantNewPlanDetails.Item.ProcessorPlanId.S",
+        "plan.totalUsers.$": "$.tenantNewPlanDetails.Item.TotalUsers.N",
+        "users.$" : "$.disabledUsersSuccess"
+      }
+    }
+  }
+}

@@ -1,0 +1,33 @@
+{
+    "StartAt": "AddDeleteAccountFlag",
+    "States": {
+      "AddDeleteAccountFlag": {
+        "Type": "Task",
+        "Resource": "arn:aws:states:::dynamodb:updateItem",
+        "Parameters": {
+          "TableName": "${dataStackName}-Tenants",
+          "Key": {
+            "Id": {
+              "S.$": "$.identity.claims.name"
+            }
+          },
+          "UpdateExpression": "SET #attNameRef = :myValueRef",
+          "ExpressionAttributeNames": {
+            "#attNameRef": "DeleteAccountFlag"
+          },
+          "ExpressionAttributeValues": {
+            ":myValueRef": {"BOOL": "true"}
+          }
+        },
+        "ResultPath": "$.success",
+        "Next": "ReturnSuccess"
+      },
+      "ReturnSuccess": {
+        "Type": "Pass",
+        "End": true,
+        "Parameters": {
+          "success": "true"
+        }
+      }
+    }  
+  }

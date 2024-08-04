@@ -1,0 +1,106 @@
+
+{
+    "StartAt": "GetTenant",
+    "States": {
+        "GetTenant": {
+            "Type": "Task",
+            "Resource": "arn:aws:states:::dynamodb:getItem",
+            "Parameters": {
+            "TableName": "${dataStackName}-Tenants",
+            "Key": {
+                "Id": {
+                "S.$": "$.identity.claims.name"
+                }
+            }
+            },
+            "Next": "DynamoDBGetCurrentTenantPlanDetails",
+            "ResultPath": "$.Tenant"
+        },
+        "DynamoDBGetCurrentTenantPlanDetails": {
+            "Type": "Task",
+            "Resource": "arn:aws:states:::dynamodb:getItem",
+            "Parameters": {
+            "TableName": "${dataStackName}-PricePlans",
+            "Key": {
+                "Id": {
+                "S.$": "$.Tenant.Item.PlanId.S"
+                }
+            }
+            },
+            "Next": "CheckTrialPeriodTimestamp",
+            "ResultPath": "$.PricePlan"
+        },
+        "CheckTrialPeriodTimestamp": {
+            "Type": "Choice",
+            "Choices": [
+            {
+                "Variable": "$.Tenant.Item.TrialPeriodTimestamp.N",
+                "IsPresent": false,
+                "Next": "SetNull"
+            }
+            ],
+            "Default": "Lambda-TrialPeriodCalculation"
+        },
+        "SetNull": {
+            "Type": "Pass",
+            "Next": "Lambda-TrialPeriodCalculation",
+            "Parameters": {
+            "N": null
+            },
+            "ResultPath": "$.Tenant.Item.TrialPeriodTimestamp"
+        },
+        "Lambda-TrialPeriodCalculation": {
+            "Type": "Task",
+            "Resource": "arn:aws:states:::lambda:invoke",
+            "ResultPath": "$.trialPeriod",
+            "Parameters": {
+            "Payload": {
+                "trialPeriodTimestamp.$": "$.Tenant.Item.TrialPeriodTimestamp.N",
+                "trialPeriodDays": "${trialPeriodDays}"
+            },
+            "FunctionName": "${trialPeriodCalculationFunction}"
+            },
+            "Retry": [
+            {
+                "ErrorEquals": [
+                "Lambda.ServiceException",
+                "Lambda.AWSLambdaException",
+                "Lambda.SdkClientException",
+                "Lambda.TooManyRequestsException"
+                ],
+                "IntervalSeconds": 2,
+                "MaxAttempts": 6,
+                "BackoffRate": 2
+            }
+            ],
+            "Next": "CheckTrialPeriodDays"
+        },
+        "CheckTrialPeriodDays": {
+            "Type": "Choice",
+            "Choices": [
+            {
+                "Variable": "$.Tenant.Item.TrialPeriodDays.N",
+                "IsPresent": false,
+                "Next": "SetTrialPeriodDays"
+            }
+            ],
+            "Default": "PassToPreTokenGeneration"
+        },
+        "SetTrialPeriodDays": {
+            "Type": "Pass",
+            "Next": "PassToPreTokenGeneration",
+            "Parameters": {
+            "N": "${trialPeriodDays}"
+            },
+            "ResultPath": "$.Tenant.Item.TrialPeriodDays"
+        },
+        "PassToPreTokenGeneration": {
+            "Type": "Pass",
+            "End": true,
+            "Parameters": {
+                "trialPeriodTimestamp.$": "$.trialPeriod.Payload.trialPeriodTimestamp",
+                "trialPeriodStatus.$": "$.trialPeriod.Payload.trialPeriodStatus"
+            }
+        }
+    }
+}

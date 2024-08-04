@@ -1,0 +1,85 @@
+{
+    "StartAt": "ListUsers",
+    "States": {
+      "ListUsers": {
+        "Type": "Pass",
+        "Next": "CognitoListUsers",
+        "ResultPath": "$.filter",
+        "Result": {
+          "template": "name = '{}'"
+        }
+      },
+      "CognitoListUsers": {
+        "Type": "Task",
+        "Next": "AddGroupMap",
+        "Parameters": {
+          "UserPoolId": "${cognitoEntity}",
+          "Filter.$": "States.Format($.filter.template, $.identity.claims.name)"
+        },
+        "Resource": "arn:aws:states:::aws-sdk:cognitoidentityprovider:listUsers",
+        "ResultPath": "$.CognitoListUsers"
+      },
+      "AddGroupMap": {
+        "Type": "Map",
+        "ItemsPath": "$.CognitoListUsers.Users",
+        "ResultPath": "$.Users",
+        "ItemProcessor": {
+          "ProcessorConfig": {
+            "Mode": "INLINE"
+          },
+          "StartAt": "AdminGetGroup",
+          "States": {
+            "AdminGetGroup": {
+              "Type": "Task",
+              "Parameters": {
+                "UserPoolId": "us-east-2_AwJnQGiC7",
+                "Username.$": "$.Username"
+              },
+              "Resource": "arn:aws:states:::aws-sdk:cognitoidentityprovider:adminListGroupsForUser",
+              "ResultPath": "$.Groups",
+              "Next": "UnNestGroup"
+            },
+            "UnNestGroup": {
+              "Type": "Pass",
+              "Next": "UnwindUserAttributes",
+              "Parameters": {
+                "Group.$": "$.Groups.Groups[0].GroupName",
+                "GroupModified.$": "$.Groups.Groups[0].LastModifiedDate"
+              },
+              "ResultPath": "$.currentGroup"
+            },
+            "UnwindUserAttributes": {
+              "Type": "Pass",
+              "Next": "Pass",
+              "Parameters": {
+                "Email.$": "$.Attributes[?(@.Name == email)].Value",
+                "Id.$": "$.Attributes[?(@.Name == sub)].Value"
+              },
+              "ResultPath": "$.AttributesUnwound"
+            },
+            "Pass": {
+              "Type": "Pass",
+              "End": true,
+              "Parameters": {
+                "email.$": "$.AttributesUnwound.Email[0]",
+                "id.$": "$.AttributesUnwound.Id[0]",
+                "group.$": "$.currentGroup.Group",
+                "groupModfified.$": "$.currentGroup.GroupModified",
+                "enabled.$": "$.Enabled",
+                "created.$": "$.UserCreateDate",
+                "modified.$": "$.UserLastModifiedDate",
+                "status.$": "$.UserStatus"
+              }
+            }
+          }
+        },
+        "Next": "SnippitEnd"
+      },
+      "SnippitEnd": {
+        "Type": "Pass",
+        "End": true,
+        "ResultPath": null,
+        "OutputPath": "$.Users"
+      }
+    }
+  }

@@ -1,0 +1,313 @@
+{ 
+    "StartAt": "CountCurrentUsers",
+    "States": {
+      "CountCurrentUsers": {
+        "Type": "Pass",
+        "Next": "ListUsers",
+        "ResultPath": "$.filter",
+        "Result": {
+          "template": "name = '{}'"
+        }
+      }, 
+      "ListUsers": {
+        "Type": "Task",
+        "Next": "IsolateCount",
+        "Parameters": {
+          "UserPoolId": "${cognitoEntity}",
+          "Filter.$": "States.Format($.filter.template, $.identity.claims.name)"
+        },
+        "Resource": "arn:aws:states:::aws-sdk:cognitoidentityprovider:listUsers",
+        "ResultPath": "$.countCurrentUsers",
+        "ResultSelector": {
+          "Count.$": "States.ArrayLength($.Users)"
+        }
+      },
+      "IsolateCount": {
+        "Type": "Pass",
+        "Next": "SetNewPlanCount",
+        "InputPath": "$.countCurrentUsers.Count",
+        "ResultPath": "$.currentUserCount"          
+      },
+      "SetNewPlanCount": {
+        "Type" : "Pass",
+        "Next" : "CheckIfNeedToDeleteUsers",
+        "Parameters" : 1,
+        "ResultPath": "$.newPlanUserCount"
+      },
+      "CheckIfNeedToDeleteUsers": {
+        "Type": "Choice",
+        "Choices": [
+          {
+            "Variable": "$.currentUserCount",
+            "NumericGreaterThanPath": "$.newPlanUserCount",
+            "Next": "ListTenantUsersFilter"
+          }
+        ],
+        "Default": "GetTenant"
+      },
+      "ListTenantUsersFilter": {
+        "Type": "Pass",
+        "Next": "CognitoListUsers",
+        "ResultPath": "$.filter",
+        "Result": {
+          "template": "name = '{}'"
+        }
+      },
+      "CognitoListUsers": {
+        "Type": "Task",
+        "Next": "AddGroupMap",
+        "Parameters": {
+          "UserPoolId": "${cognitoEntity}",
+          "Filter.$": "States.Format($.filter.template, $.identity.claims.name)"
+        },
+        "Resource": "arn:aws:states:::aws-sdk:cognitoidentityprovider:listUsers",
+        "ResultPath": "$.CognitoListUsers"
+      },
+      "AddGroupMap": {
+        "Type": "Map",
+        "ItemsPath": "$.CognitoListUsers.Users",
+        "ResultPath": "$.Users",
+        "ItemProcessor": {
+          "ProcessorConfig": {
+            "Mode": "INLINE"
+          },
+          "StartAt": "AdminGetGroup",
+          "States": {
+            "AdminGetGroup": {
+              "Type": "Task",
+              "Parameters": {
+                "UserPoolId": "us-east-2_AwJnQGiC7",
+                "Username.$": "$.Username"
+              },
+              "Resource": "arn:aws:states:::aws-sdk:cognitoidentityprovider:adminListGroupsForUser",
+              "ResultPath": "$.Groups",
+              "Next": "UnNestGroup"
+            },
+            "UnNestGroup": {
+              "Type": "Pass",
+              "Next": "UnwindUserAttributes",
+              "Parameters": {
+                "Group.$": "$.Groups.Groups[0].GroupName",
+                "GroupModified.$": "$.Groups.Groups[0].LastModifiedDate"
+              },
+              "ResultPath": "$.currentGroup"
+            },
+            "UnwindUserAttributes": {
+              "Type": "Pass",
+              "Next": "MapPass",
+              "Parameters": {
+                "Email.$": "$.Attributes[?(@.Name == email)].Value",
+                "Id.$": "$.Attributes[?(@.Name == sub)].Value"
+              },
+              "ResultPath": "$.AttributesUnwound"
+            },
+            "MapPass": {
+              "Type": "Pass",
+              "End": true,
+              "Parameters": {
+                "email.$": "$.AttributesUnwound.Email[0]",
+                "id.$": "$.AttributesUnwound.Id[0]",
+                "group.$": "$.currentGroup.Group",
+                "groupModfified.$": "$.currentGroup.GroupModified",
+                "enabled.$": "$.Enabled",
+                "created.$": "$.UserCreateDate",
+                "modified.$": "$.UserLastModifiedDate",
+                "status.$": "$.UserStatus"
+              }
+            }
+          }
+        },
+        "Next": "MapDeleteUser"
+      },
+      "MapDeleteUser": {
+        "Type": "Map",
+        "ItemsPath": "$.Users",
+        "ResultPath": "$.DeleteTenantAndProcessorData",
+        "Iterator": {
+          "StartAt": "CheckIfUserIsOwner",
+          "States": {
+            "CheckIfUserIsOwner": {
+              "Type": "Choice",
+              "Choices": [
+                {
+                  "Variable": "$.group",
+                  "StringEquals": "Owner",
+                  "Next": "ReturnSuccess"
+                }
+              ],
+              "Default": "AdminUserGlobalSignOut"
+            },
+            "AdminUserGlobalSignOut": {
+              "Type": "Task",
+              "Next": "AdminDeleteUser",
+              "ResultPath": "$.AdminGlobalSignOut",
+              "Parameters": {
+                "UserPoolId": "${cognitoEntity}",
+                "Username.$": "$.id"
+              },
+              "Resource": "arn:aws:states:::aws-sdk:cognitoidentityprovider:adminUserGlobalSignOut"
+            },
+            "AdminDeleteUser": {
+              "Type": "Task",
+              "Next": "ReturnSuccess",
+              "Parameters": {
+                "UserPoolId": "${cognitoEntity}",
+                "Username.$": "$.id"
+              },
+              "Resource": "arn:aws:states:::aws-sdk:cognitoidentityprovider:adminDeleteUser"
+            },
+            "ReturnSuccess": {
+              "Type": "Pass",
+              "End": true,
+              "Parameters": {
+                "success": "true"
+              }
+            }
+          }
+        },
+        "Next" : "GetTenant"
+      },
+
+      "GetTenant": {
+        "Type": "Task",
+        "Resource": "arn:aws:states:::dynamodb:getItem",
+        "Parameters": {
+          "TableName": "${dataStackName}-Tenants",
+          "Key": {
+            "Id": {
+              "S.$": "$.identity.claims.name"
+            }
+          }
+        },
+        "Next": "GetProcessorSubscription",
+        "ResultPath": "$.GetTenant"
+      },
+      "GetProcessorSubscription": {
+        "Type": "Task",
+        "Resource": "arn:aws:states:::lambda:invoke",
+        "Parameters": {
+          "Payload": {
+            "callback": "querySubscriptionByMetadataPlanIdAndTenantId",
+            "planId.$": "$.GetTenant.Item.PlanId.S",
+            "tenantId.$": "$.identity.claims.name"
+          },
+          "FunctionName": "${stripeApiEntity}"
+        },
+        "Retry": [
+          {
+            "ErrorEquals": [
+              "Lambda.ServiceException",
+              "Lambda.AWSLambdaException",
+              "Lambda.SdkClientException",
+              "Lambda.TooManyRequestsException"
+            ],
+            "IntervalSeconds": 1,
+            "MaxAttempts": 3,
+            "BackoffRate": 2
+          }
+        ],
+        "Next": "CancelPaidPlan",
+        "ResultPath": "$.GetProcessorSubscription"
+      },
+      "CancelPaidPlan": {
+        "Type": "Task",
+        "Resource": "arn:aws:states:::lambda:invoke",
+        "ResultPath": "$.CancelPaidPlanData",
+        "Parameters": {
+          "Payload": {
+            "callback": "cancelSubscription",
+            "customerId.$": "$.GetProcessorSubscription.Payload.data[0].id"
+          },
+          "FunctionName": "${stripeApiEntity}"
+        },
+        "Retry": [
+          {
+            "ErrorEquals": [
+              "Lambda.ServiceException",
+              "Lambda.AWSLambdaException",
+              "Lambda.SdkClientException",
+              "Lambda.TooManyRequestsException"
+            ],
+            "IntervalSeconds": 2,
+            "MaxAttempts": 6,
+            "BackoffRate": 2
+          }
+        ],
+        "Next": "UpdateTenant"
+      },
+      "UpdateTenant": {
+        "Type": "Task",
+        "Resource": "arn:aws:states:::dynamodb:updateItem",
+        "ResultPath": "$.UpdateTenant",
+        "Parameters": {
+          "TableName": "${dataStackName}-Tenants",
+          "Key": {
+            "Id": {
+              "S.$": "$.identity.claims.name"
+            }
+          },
+          "UpdateExpression": "SET PlanId = :myValueRef REMOVE CancelPlanAt",
+          "ExpressionAttributeValues": {
+            ":myValueRef": {
+              "S": "${freePlanDBKey}"
+            }
+          }
+        },
+        "Next": "ChangeGroup"
+      },
+      "ChangeGroup": {
+        "Type": "Task",
+        "Parameters": {
+          "GroupName": "Free",
+          "UserPoolId": "${cognitoEntity}",
+          "Username.$": "$.identity.claims.sub"
+        },
+        "Resource": "arn:aws:states:::aws-sdk:cognitoidentityprovider:adminAddUserToGroup",
+        "Next": "AdminRemoveUserFromGroup",
+        "Catch": [
+          {
+            "ErrorEquals": [
+              "States.ALL"
+            ],
+            "Next": "AddOrRemoveFromGroupError"
+          }
+        ],
+        "ResultPath": null
+      },
+      "AdminRemoveUserFromGroup": {
+        "Type": "Task",
+        "Parameters": {
+          "GroupName": "Owner",
+          "UserPoolId": "${cognitoEntity}",
+          "Username.$": "$.identity.claims.sub"
+        },
+        "Resource": "arn:aws:states:::aws-sdk:cognitoidentityprovider:adminRemoveUserFromGroup",
+        "Catch": [
+          {
+            "ErrorEquals": [
+              "States.ALL"
+            ],
+            "Next": "AddOrRemoveFromGroupError"
+          }
+        ],
+        "Next": "Pass",
+        "ResultPath": null
+      },
+      "AddOrRemoveFromGroupError": {
+        "Type": "Fail",
+        "Error": "AddOrRemoveFromGroup",
+        "Cause": "Add or Remove From Group Error"
+      },
+      "Pass": {
+        "Type": "Pass",
+        "End": true,
+        "InputPath": "$",
+        "Parameters": {
+            "id.$" : "$.identity.claims.name",
+            "planId": "${freePlanDBKey}",
+            "plan.id": "${freePlanDBKey}"
+        },
+        "ResultPath": "$"
+      }
+    }
+  }

@@ -1,0 +1,123 @@
+{
+    "StartAt": "LambdaCheckCaptcha",
+    "States": {
+      "LambdaCheckCaptcha": {
+        "Type": "Task",
+        "Resource": "arn:aws:states:::lambda:invoke",
+        "ResultPath": "$.LambdaCheckCaptcha",
+        "Parameters": {
+          "Payload": {
+            "captchaResponse.$": "$.arguments.input.captchaToken"
+          },
+          "FunctionName": "${captchaEntity}"
+        },
+        "Retry": [
+          {
+            "ErrorEquals": [
+              "Lambda.ServiceException",
+              "Lambda.AWSLambdaException",
+              "Lambda.SdkClientException",
+              "Lambda.TooManyRequestsException"
+            ],
+            "IntervalSeconds": 2,
+            "MaxAttempts": 6,
+            "BackoffRate": 2
+          }
+        ],
+        "Next": "CheckLambdaCaptchaError"
+      },
+      "CheckLambdaCaptchaError": {
+        "Type": "Choice",
+        "Choices": [
+          {
+            "Variable": "$.LambdaCheckCaptcha.Payload.error.errorType",
+            "IsPresent": true,
+            "Next": "FailLambdaError"
+          }
+        ],
+        "Default": "CheckifUnauthenticatedUser"
+      },
+      "CheckifUnauthenticatedUser": {
+        "Type": "Choice",
+        "Choices": [
+          {
+            "Or": [
+              {
+                "Not": {
+                  "Variable": "$.identity.cognitoIdentityAuthType",
+                  "IsPresent": true
+                }
+              },
+              {
+                "Or": [
+                  {
+                    "Variable": "$.identity.cognitoIdentityAuthType",
+                    "StringMatches": "unauthenticated"
+                  },
+                  {
+                    "Variable": "$.identity.cognitoIdentityAuthType",
+                    "IsNull": true
+                  }
+                ]
+              }
+            ],
+            "Next": "UnauthenticatedUserEmail"
+          }
+        ],
+        "Default": "AuthenticatedUserEmail"
+      },
+      "AuthenticatedUserEmail": {
+        "Type": "Pass",
+        "Next": "SendEmail",
+        "Parameters": {
+          "replyToAddress.$": "$.identity.claims.email"
+        },
+        "ResultPath": "$.selectedEmail"
+      },
+      "UnauthenticatedUserEmail": {
+        "Type": "Pass",
+        "Next": "SendEmail",
+        "Parameters": {
+          "replyToAddress.$": "$.arguments.input.email"
+        },
+        "ResultPath": "$.selectedEmail"
+      },
+      "FailLambdaError": {
+        "Type": "Fail",
+        "Error": "LambdaCheckCaptchaError",
+        "Cause": "Chack Captcha Error"
+      },
+      "SendEmail": {
+        "Type": "Task",
+        "Next": "Pass",
+        "Parameters": {
+          "Content": { 
+              "Simple": { 
+                "Body": { 
+                    "Html": { 
+                      "Data.$": "$.arguments.input.message"
+                    }
+                },
+                "Subject": { 
+                    "Data.$": "$.arguments.input.subject"
+                }
+              }
+          },
+        "FromEmailAddress" : "${contactUsEmail}",
+        "ReplyToAddresses.$": "States.Array($.selectedEmail.replyToAddress)",
+        "Destination": { 
+            "ToAddresses": [ "${contactUsEmail}" ]
+        }
+      },
+        "Resource": "arn:aws:states:::aws-sdk:sesv2:sendEmail"
+      },
+      "Pass": {
+        "Type": "Pass",
+        "Parameters": {
+          "message": "Enterprise pricing request email sent.",
+          "messageType": "enterprise_pricing_email_request_success"
+        },
+        "End": true
+      }
+    }
+  }

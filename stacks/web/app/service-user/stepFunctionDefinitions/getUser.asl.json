@@ -1,0 +1,103 @@
+{
+    "StartAt": "VerifyTenantUser",
+    "States": {
+      "VerifyTenantUser": {
+        "Type": "Task",
+        "Parameters": {
+          "UserPoolId": "${cognitoEntity}",
+          "Username.$": "$.arguments.id"
+        },
+        "Resource": "arn:aws:states:::aws-sdk:cognitoidentityprovider:adminGetUser",
+        "Next": "IsolateTenantId",
+        "ResultPath": "$.User",
+        "Catch": [
+          {
+            "ErrorEquals": [
+              "CognitoIdentityProvider.UserNotFoundException"
+            ],
+            "Next": "FailUserNotFound"
+          }
+        ]
+      },
+      "IsolateTenantId": {
+        "Type": "Pass",
+        "Next": "UnwindTenantId",
+        "Parameters": {
+          "User.$": "$.User",
+          "tenant_id.$": "$.User.UserAttributes[?(@.Name == name)].Value",
+          "matching_tenant_id.$": "$.identity.claims.name"
+        },
+        "ResultPath": "$.input"
+      },
+      "UnwindTenantId": {
+        "Type": "Pass",
+        "Next": "CheckUserTenantIdMatchesClient",
+        "Parameters": {
+          "User.$": "$.User",
+          "tenant_id.$": "$.input.tenant_id[0]",
+          "matching_tenant_id.$": "$.input.matching_tenant_id"
+        },
+        "ResultPath": "$.input"
+      },
+      "FailUserNotFound": {
+        "Type": "Fail",
+        "Error": "UsernameNotFound",
+        "Cause": "Username Not Found"
+      },
+      "CheckUserTenantIdMatchesClient": {
+        "Type": "Choice",
+        "Choices": [
+          {
+            "Variable": "$.input.matching_tenant_id",
+            "StringEqualsPath": "$.input.tenant_id",
+            "Next": "GetUserGroup"
+          }
+        ],
+        "Default": "FailUserNotFound"
+      },
+      "GetUserGroup": {
+        "Type": "Task",
+        "Parameters": {
+          "UserPoolId": "${cognitoEntity}",
+          "Username.$": "$.User.Username"
+        },
+        "Resource": "arn:aws:states:::aws-sdk:cognitoidentityprovider:adminListGroupsForUser",
+        "ResultPath": "$.Groups",
+        "Next": "UnNestGroup"
+      },
+      "UnNestGroup": {
+        "Type": "Pass",
+        "Next": "FilterIdJsonPathWorkaround",
+        "Parameters": {
+          "group.$": "$.Groups.Groups[0].GroupName",
+          "groupModified.$": "$.Groups.Groups[0].LastModifiedDate"
+        },
+        "ResultPath": "$.currentGroup"
+      },
+      "FilterIdJsonPathWorkaround": {
+        "Type": "Pass",
+        "Next": "Success",
+        "ResultPath": "$.workaround",
+        "Parameters": {
+          "sub.$": "$.User.UserAttributes[?(@.Name==sub)].Value",
+          "email.$": "$.User.UserAttributes[?(@.Name==email)].Value",
+          "name.$": "$.User.UserAttributes[?(@.Name==name)].Value"
+        }
+      },
+      "Success": {
+        "Type": "Pass",
+        "End": true,
+        "Parameters": {
+            "id.$": "$.workaround.sub[0]",
+            "email.$": "$.workaround.email[0]",
+            "group.$": "$.currentGroup.group",
+            "groupModfified.$": "$.currentGroup.groupModified",
+            "enabled.$": "$.User.Enabled",
+            "created.$": "$.User.UserCreateDate",
+            "modified.$": "$.User.UserLastModifiedDate",
+            "status.$": "$.User.UserStatus",
+            "tenantId.$": "$.workaround.name[0]"
+        }
+      }
+    }
+  }

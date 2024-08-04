@@ -1,0 +1,154 @@
+{
+    "StartAt": "ConvertPlanUsersInt",
+    "States": {
+      "ConvertPlanUsersInt": {
+        "Type": "Pass",
+        "Next": "ListUsers",
+        "ResultPath": "$.filter",
+        "Result": {
+          "template": "name = '{}'"
+        }
+      }, 
+      "ListUsers": {
+        "Type": "Task",
+        "Next": "IsolateCount",
+        "Parameters": {
+          "UserPoolId": "${cognitoEntity}",
+          "Filter.$": "States.Format($.filter.template, $.identity.claims.name)"
+        },
+        "Resource": "arn:aws:states:::aws-sdk:cognitoidentityprovider:listUsers",
+        "ResultPath": "$.countCurrentUsers",
+        "ResultSelector": {
+          "Count.$": "States.ArrayLength($.Users)"
+        }
+      },
+      "IsolateCount": {
+        "Type": "Pass",
+        "Next": "GetTenant",
+        "InputPath": "$.countCurrentUsers.Count",
+        "ResultPath": "$.currentUserCount"          
+      },
+      "GetTenant": {
+        "Type": "Task",
+        "Resource": "arn:aws:states:::dynamodb:getItem",
+        "Parameters": {
+          "TableName": "${dataStackName}-Tenants",
+          "Key": {
+            "Id": {
+              "S.$": "$.identity.claims.name"
+            }
+          }
+        },
+        "Next": "GetPlan",
+        "ResultPath": "$.GetTenant"
+      },
+      "GetPlan": {
+        "Type": "Task",
+        "Resource": "arn:aws:states:::dynamodb:getItem",
+        "ResultPath": "$.GetPlan",
+        "Parameters": {
+          "TableName": "${dataStackName}-PricePlans",
+          "Key": {
+            "Id": {
+              "S.$": "$.GetTenant.Item.PlanId.S"
+            }
+          }
+        },
+        "Next": "GetNumericalMaxUsers"
+      },
+      "GetNumericalMaxUsers": {
+        "Type": "Pass",
+        "Next": "CheckMaxUsers",
+        "Parameters": {
+          "N.$": "States.StringToJson($.GetPlan.Item.TotalUsers.N)"
+        },
+        "ResultPath": "$.User.MaxUsers"
+      },
+      "CheckMaxUsers": {
+        "Type": "Choice",
+        "Choices": [
+          {
+            "Variable": "$.currentUserCount",
+            "NumericGreaterThanEqualsPath": "$.User.MaxUsers.N",
+            "Next": "PlanUserLimitReached"
+          }
+        ],
+        "Default": "AdminCreateUser"
+      },
+      "PlanUserLimitReached": {
+        "Type": "Fail",
+        "Error": "PlanUserLimitReached",
+        "Cause": "You cannot add anymore users under your current plan."
+      },
+      "AdminCreateUser": {
+          "Type": "Task",
+          "ResultPath" : "$.AdminCreateUser",
+          "Parameters": {
+              "UserPoolId": "${cognitoEntity}",
+              "Username.$": "$.arguments.username",
+              "UserAttributes": [ 
+                  { 
+                      "Name": "name",
+                      "Value.$": "$.identity.claims.name"
+                  },
+                  { 
+                      "Name": "email",
+                      "Value.$": "$.arguments.username"
+                  },
+                  {
+                      "Name": "email_verified",
+                      "Value": "true"
+                  }
+              ]
+          },
+          "Catch": [
+              {
+              "ErrorEquals": [
+                  "CognitoIdentityProvider.UsernameExistsException"
+              ],
+              "Next": "Fail"
+              }
+          ],
+          "Resource": "arn:aws:states:::aws-sdk:cognitoidentityprovider:adminCreateUser",
+          "Next": "AdminAddUserToGroup"
+      },
+      "Fail": {
+          "Type": "Fail",
+          "Error": "CognitoIdentityProvider.UsernameExistsException",
+          "Cause": "Username Already Exists"
+      },
+      "AdminAddUserToGroup": {
+      "Type": "Task",
+      "Next": "FilterIdJsonPathWorkaround",
+      "Parameters": {
+          "GroupName": "User",
+          "UserPoolId": "${cognitoEntity}",
+          "Username.$": "$.AdminCreateUser.User.Username"
+      },
+      "ResultPath": null,
+      "Resource": "arn:aws:states:::aws-sdk:cognitoidentityprovider:adminAddUserToGroup"
+      },
+      "FilterIdJsonPathWorkaround": {
+        "Type": "Pass",
+        "Next": "Success",
+        "ResultPath": "$.workaround",
+        "Parameters": {
+          "email.$": "$.AdminCreateUser.User.Attributes[?(@.Name==email)].Value"
+        }
+      },
+      "Success": {
+        "Type": "Pass",
+        "End": true,
+        "Parameters": {
+            "id.$": "$.AdminCreateUser.User.Username",
+            "email.$": "$.workaround.email[0]",
+            "group": "User",
+            "enabled.$": "$.AdminCreateUser.User.Enabled",
+            "created.$": "$.AdminCreateUser.User.UserCreateDate",
+            "modified.$": "$.AdminCreateUser.User.UserLastModifiedDate",
+            "status.$": "$.AdminCreateUser.User.UserStatus",
+            "tenantId.$": "$.identity.claims.name"
+        }
+      }
+    }
+  }

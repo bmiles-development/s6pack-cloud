@@ -1,0 +1,120 @@
+{
+    "StartAt": "Create UUID for TenantId",
+    "States": {
+      "Create UUID for TenantId": {
+        "Type": "Pass",
+        "Next": "DynamoDB PutItem",
+        "Parameters": {
+          "name.$": "States.UUID()"
+        },
+        "ResultPath": "$.input"
+      },
+      "DynamoDB PutItem": {
+        "Type": "Task",
+        "Resource": "arn:aws:states:::dynamodb:putItem",
+        "Parameters": {
+          "TableName": "${dataStackName}-Tenants",
+          "Item": {
+            "PlanId": {
+              "S": "${freePlanDBKey}"
+            },
+            "Id": {
+              "S.$": "$.input.name"
+            }
+          }
+        },
+        "Next": "DynamoDB GetItem",
+        "ResultPath": "$.PricePlan"
+      },
+      "DynamoDB GetItem": {
+        "Type": "Task",
+        "Resource": "arn:aws:states:::dynamodb:getItem",
+        "Parameters": {
+          "TableName": "${dataStackName}-PricePlans",
+          "Key": {
+            "Id": {
+              "S": "${freePlanDBKey}"
+            }
+          }
+        },
+        "Next": "List Users Filter Template",
+        "ResultPath": "$.PricePlan"
+      },
+      "List Users Filter Template": {
+        "Type": "Pass",
+        "Next": "ListUsers",
+        "ResultPath": "$.filter",
+        "Result": {
+          "template": "sub = '{}'"
+        }
+      },
+      "ListUsers": {
+        "Type": "Task",
+        "Next": "AdminUpdateUserAttributes",
+        "Parameters": {
+          "UserPoolId": "${cognitoEntity}",
+          "Filter.$": "States.Format($.filter.template, $.userSub)"
+        },
+        "Resource": "arn:aws:states:::aws-sdk:cognitoidentityprovider:listUsers",
+        "ResultPath": "$.foundUser",
+        "ResultSelector": {
+          "User.$": "$.Users[0]"
+        }
+      },
+      "AdminUpdateUserAttributes": {
+        "Type": "Task",
+        "Next": "AdminAddUserToGroup",
+        "Parameters": {
+          "UserAttributes": [
+            {
+              "Name": "name",
+              "Value.$": "$.input.name"
+            }
+          ],
+          "UserPoolId": "${cognitoEntity}",
+          "Username.$": "$.foundUser.User.Username"
+        },
+        "Resource": "arn:aws:states:::aws-sdk:cognitoidentityprovider:adminUpdateUserAttributes",
+        "ResultPath": "$.attributes"
+      },
+      "AdminAddUserToGroup": {
+        "Type": "Task",
+        "Next": "ChoiceDoesPlanExist",
+        "Parameters": {
+          "GroupName": "Free",
+          "UserPoolId": "${cognitoEntity}",
+          "Username.$": "$.foundUser.User.Username"
+        },
+        "Resource": "arn:aws:states:::aws-sdk:cognitoidentityprovider:adminAddUserToGroup",
+        "ResultPath": "$.addUserToGroup"
+      },
+      "ChoiceDoesPlanExist": {
+        "Type": "Choice",
+        "Choices": [
+          {
+            "Not": {
+              "Variable": "$.PricePlan.Item.Id.S",
+              "IsPresent": true
+            },
+            "Next": "PlanIdNotFound"
+          }
+        ],
+        "Default": "Pass"
+      },
+      "PlanIdNotFound": {
+        "Type": "Fail",
+        "Error": "PlanIdNotFound",
+        "Cause": "Plan Id Not Found In Database"
+      },
+      "Pass": {
+        "Type": "Pass",
+        "Parameters": {
+          "id.$": "$.PricePlan.Item.Id.S",
+          "price.$": "$.PricePlan.Item.Price.N",
+          "users.$": "$.PricePlan.Item.TotalUsers.N",
+          "tenantId.$": "$.input.name"
+        },
+        "End": true
+      }
+    }
+  }
