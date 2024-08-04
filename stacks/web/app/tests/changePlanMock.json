@@ -48,7 +48,7 @@
         "Return": {
           "Item": {
             "StatementDescriptor": {
-              "S": "stationshq- Biz Plan"
+              "S": "s6pack- Biz Plan"
             },
             "Price": {
               "N": "999"
@@ -83,7 +83,7 @@
         "Return": {
           "Item": {
             "StatementDescriptor": {
-              "S": "stationshq- Pro Plan"
+              "S": "s6pack- Pro Plan"
             },
             "Price": {
               "N": "499"

@@ -43,7 +43,7 @@ export class HostingStack extends TerraformStack {
       this._ssmResource = new Ssm(this, "ssm", config.parameterStorePrefix)
       const iamResource = new Iam(this, "Iam", accountId, config.hostedZone, config.defaultRegion)
       
-      //sometimes SES Error: Error setting MAIL FROM domain: InvalidParameterValue: Identity <stationshq.io> does not exist. Just wait a minute and re-reploy
+      //sometimes SES Error: Error setting MAIL FROM domain: InvalidParameterValue: Identity <s6pack.build> does not exist. Just wait a minute and re-reploy
       this._sesResource = new Ses(this, "Ses", config, iamResource.jsonStringPolicies['sesIdentityPolicy'])
       this._acmResource = new Acm(this, "acm", config.hostedZone, config, awsUsEast1Provider)
       this._hostedZoneResource = new Route53HostedZone(this, "route53HostedZone", config.defaultRegion, config.hostedZone, config.sesMailDomain, this._sesResource, this._acmResource)

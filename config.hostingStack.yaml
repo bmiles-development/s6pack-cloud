@@ -6,8 +6,9 @@ parameterStorePrefix: /global/parameters/
 #
 # /global/parameters/testUsername = "test@test.com"
 # /global/parameters/contactUsEmail-dev = "testp+contactUsTest@test.com"
-# /global/parameters/contactUsEmail-live = "test@production.com"
+# /global/parameters/contactUsEmail-live = "test+production@test.com"
 # /global/parameters/testPassword = "R123xyz123-!"
+#### the following will be output in the terraform output cli once you've deployed dataStackDev and dataStackLive (see readme.md/documentation)
 # /global/parameters/testUserPoolId = "us-east-2_dcm0srgevu"
 # /global/parameters/testFreeTrialPlanId = "dev_vusoqngu3xht4x" //free trial plan id (eg: Business Plan)
 # /global/parameters/testPaidPlanId = "dev_vusoyyyyyyyyy" //paid plan id (eg: Pro Plan)
@@ -27,10 +28,10 @@ parameterStorePrefix: /global/parameters/
 # or remote state storage (eg on S3)
 #
 
-hostedZone: stationshq.io
-sesMailDomain: mail.stationshq.io
-graphqlApiUrl: api.stationshq.io
-testGraphQlEndpoint: https://apidev.stationshq.io/graphql
+hostedZone: s6pack.build
+sesMailDomain: mail.s6pack.build
+graphqlApiUrl: api.s6pack.build
+testGraphQlEndpoint: https://apidev.s6pack.build/graphql
 defaultRegion: us-east-2
-logBucketNamePrefix: stationshq-io
+logBucketNamePrefix: s6pack-build
 logRetentionPeriod: 90 #days

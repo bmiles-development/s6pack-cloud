@@ -7,7 +7,7 @@ stripe:
   - name: Free
     sortOrder: 5
     id: Free
-    statementDescriptor: 'stationshq- Free' #this will appear on billing statements- max 22 characters in length
+    statementDescriptor: 's6pack- Free' #this will appear on billing statements- max 22 characters in length
     featureList: 'One User'
     metadata: 
       pricingSet: default
@@ -16,7 +16,7 @@ stripe:
   - name: Basic
     sortOrder: 10
     id: w012xru2xsz99
-    statementDescriptor: 'stationshq- Basic Plan' #this will appear on billing statements- max 22 characters in length
+    statementDescriptor: 's6pack- Basic Plan' #this will appear on billing statements- max 22 characters in length
     featureList: 'One User'
     metadata: 
       pricingSet: default
@@ -25,7 +25,7 @@ stripe:
   - name: Pro
     sortOrder: 20
     id: sdv556h7Hfyzo4 #unique id for each plan. live_ and dev_ prefixes wil be added, and will also be added to metadata so that Stripe payment_intents can be easily searched
-    statementDescriptor: 'stationshq- Pro Plan'
+    statementDescriptor: 's6pack- Pro Plan'
     featureList: 'Three Users'
     metadata: 
       pricingSet: default
@@ -34,7 +34,7 @@ stripe:
   - name: Business
     sortOrder: 30
     id: vusoqngu3xht4x
-    statementDescriptor: 'stationshq- Biz Plan'
+    statementDescriptor: 's6pack- Biz Plan'
     featureList: 'Five Users'
     metadata: 
       pricingSet: default
@@ -43,7 +43,7 @@ stripe:
   - name: Enterprise
     sortOrder: 40
     id: pcb58xb3mfuwxr
-    statementDescriptor: 'stationshq- Ent Plan'
+    statementDescriptor: 's6pack- Ent Plan'
     featureList: 'Ten Users'
     metadata: 
       pricingSet: default
@@ -62,7 +62,7 @@ stripe:
 #    - 54.187.174.169
 #    - 54.187.205.235
 #    - 54.187.216.72
-cognitoFromEmail: no-reply@ #.stationshq.io
+cognitoFromEmail: no-reply@ #.s6pack.build
 sfn:
   logLevel: "ALL"
 cognito:
