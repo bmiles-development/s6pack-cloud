@@ -22,11 +22,12 @@ export class TFStateBackupStack extends TerraformStack {
 
     this._dynamoDb = new TFStateDynamoDb(this, 'tfStateBackupStack')
 
+    /*
     new S3Backend(this, {
       bucket: backendStateS3BucketName,
       key: name,
       region: region
-    })
+    })*/
   }
   
 }
