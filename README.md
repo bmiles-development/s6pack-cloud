@@ -13,10 +13,9 @@ Full deployment time will take roughly an hour with manual steps between (requir
 # Installation
  1) clone the project ```git clone git@github.com:bmiles-development/s6pack-cloud.git``` and cd into the project diractory.
  2) run ```npm update```
- 3) Create AWS [SSM Parameter Store](https://us-east-1.console.aws.amazon.com/systems-manager/parameters) for the first section of parameters outlined in the config.hostingStack.yaml comments.Modify the parameters in the following config files to match your application: config.hostingStack.yaml, config.dataStack.yaml and config.webStack.yaml
- 4) Install AWS, Stripe and dependant CDKTF providers. run ```cdktf get``` to install the providers.
- 5) run ```cdktf deploy tfStateBackupStack --auto-approve``` this will setup the state store on S3 instead of on your local machine. This is for a bunch of good reasons, including better security and avoiding syncing issues when developing with a team.
- 6) open the file ./stacks/tfStateBackup/TFStateBackupStack.ts and remove the open and closing comment tags from this block of code: 
+ 3) Install AWS, Stripe and dependant CDKTF providers. run ```cdktf get``` to install the providers.
+ 4) run ```cdktf deploy tfStateBackupStack --auto-approve``` this will setup the state store on S3 instead of on your local machine. This is for a bunch of good reasons, including better security and avoiding syncing issues when developing with a team.
+ 5) open the file ./stacks/tfStateBackup/TFStateBackupStack.ts and remove the open and closing comment tags from this block of code: 
     ```
     // import (S3Backend) from "cdktf" 
     ```
@@ -30,14 +29,85 @@ Full deployment time will take roughly an hour with manual steps between (requir
       region: region
     })*/
     ```
- 7) run ```cd cdktf.out/stacks/tfStateBackupStack && terraform init -migrate-state``` then answer ```yes``` at the prompt
- 8) run ```cd ../../../```
- 9) run ```cdktf deploy tfStateBackupStack --auto-approve```. This is necessary to avoid the chicken-or-the-egg problen of storing the tfStateBackupStack.tfState files on the tfStateBackupStack itself.
- 10) run: ```cdktf deploy hostingStack --auto-approve``` follow DNS instructions in the TerraformOutput (copy the Hosted Zone SN records into your domain name host DNS, if you do not do this the next stack deployment will fail)
- 11) run ```cdktf deploy dataStackLive dataStackDev --auto-approve --ignore-missing-stack-dependencies```
- 12) run ```cdktf deploy webStackBlue webStackGreen webStackDev --auto-approve --ignore-missing-stack-dependencies``` 
- 13) run ```cdktf deploy blueGreenToggleStack --auto-approve --ignore-missing-stack-dependencies```
- 14) if you toggle your blue/green stack, just running: ```cdktf deploy blueGreenToggleStack --auto-approve --ignore-missing-stack-dependencies``` may give you cross-stack-output errors, so just deploy the stack you are toggling to and it will update the cross-stack-output data and then NOT throw an error.  
+ 6) run ```cd cdktf.out/stacks/tfStateBackupStack && terraform init -migrate-state``` then answer ```yes``` at the prompt
+ 7) run ```cd ../../../```
+ 8) run ```cdktf deploy tfStateBackupStack --auto-approve```. This is necessary to avoid the chicken-or-the-egg problen of storing the tfStateBackupStack.tfState files on the tfStateBackupStack itself.
+ 9) Create AWS [SSM Parameter Store] ```SecureString``` Parameters(https://us-east-1.console.aws.amazon.com/systems-manager/parameters) for each of the following parameters:
+    
+    Dummy email address if response is not necessary
+    ```
+    /global/parameters/testUsername = "test@test.com" 
+    ```
+    ```
+    /global/parameters/contactUsEmail-dev = "testp+contactUsTest@test.com"
+    ```
+    ```
+    /global/parameters/contactUsEmail-live = "test+production@test.com"
+    ```
+    ```
+    /global/parameters/testPassword = "R123xyz123-!"
+    ```
+    ```
+    /global/parameters/testEmailAddressForTestingResponses = "test-your-valid-email@valid.com"
+    ```
+    Google Recaptcha secret key see https://blog.logrocket.com/implement-recaptcha-react-application/, or just create an account here https://www.google.com/recaptcha/admin/create 
+    ```
+    /global/parameters/recaptchaSiteSecret = 6Lxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+    ```
+    Free plan id, can leave as is or can be customizable (eg: Free Plan see config.dataStack.yaml)
+    ```
+    /global/parameters/testFreePlanId = "free_plan" 
+    ```
+    Paid plan id (eg: Pro Plan see config.dataStack.yaml)
+    ```
+    /global/parameters/testPaidPlanId = "pro_plan"
+    ```
+    free trial plan id (eg: Business Plan, see config.dataStack.yaml)
+    ```
+    /global/parameters/testFreeTrialPlanId = "business_plan" 
+    
+    ```
+ 10) create emplty values for these parameters for now, we will poplulate them later once they have been created:
+        ```
+        /global/parameters/stripeToken-dev = " " 
+        /global/parameters/stripeToken-live = " "
+        /global/parameters/stripeWebhookSigningSecret-dev = " "
+        /global/parameters/stripeWebhookSigningSecret-live = " " 
+        /global/parameters/testUserPoolId = " "
+        /global/parameters/testCognitoClientId = " "
+        /global/parameters/testIdentityPoolId = " "
+        /global/parameters/testUserPoolWebClientId = " "
+        ```
+ 11) run: ```cdktf deploy hostingStack --auto-approve``` follow DNS instructions in the TerraformOutput (copy the Hosted Zone SN records into your domain name host DNS, if you do not do this the next stack deployment will fail)
+ 12) run ```cdktf deploy dataStackLive dataStackDev --auto-approve --ignore-missing-stack-dependencies```
+ 13) Populate the empty Parameter Store parameters from step 10 using the cdktf deploy output in the terminal:
+        ```
+        /global/parameters/testUserPoolId = "us-east-2_dcm0srgevu"
+        /global/parameters/testCognitoClientId = "2i17xxxxxxxxxxxxxxxxxxxxxxxxxx"
+        /global/parameters/testIdentityPoolId = "us-west-2:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+        /global/parameters/testUserPoolWebClientId = "63xxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+        ```
+        
+        find the stripe api tokens here: https://dashboard.stripe.com/test/apikeys . Toggle Test Mode to "on" to get the dev token
+        ```
+        /global/parameters/stripeToken-dev = "sk_test_xxxxxxxxxxxxxxxxxxxxxxxxxxxx" 
+        ```
+        Toggle Test Mode to "off" to get the live token (if you do not have live mode set up yet, you can use the test key here also)
+        ```
+        /global/parameters/stripeToken-live = "sk_live_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" 
+        ```
+
+        ```
+        /global/parameters/stripeWebhookSigningSecret-dev = "whsec_xxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+        ```
+        if you do not have live mode set up yet, you can use the test key here as well
+        ```
+        /global/parameters/stripeWebhookSigningSecret-live = "whsec_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" 
+        ```
+
+ 14) run ```cdktf deploy webStackDev webStackBlue webStackGreen --auto-approve --ignore-missing-stack-dependencies``` 
+ 15) run ```cdktf deploy blueGreenToggleStack --auto-approve --ignore-missing-stack-dependencies```
+ 16) if you toggle your blue/green stack, just running: ```cdktf deploy blueGreenToggleStack --auto-approve --ignore-missing-stack-dependencies``` may give you cross-stack-output errors, so just deploy the stack you are toggling to (eg: if blue then deploy webStackBlue first) and it will update the cross-stack-output data and then NOT throw an error.  
 
 
 # Possible Deployment Issues

@@ -1,12 +1,12 @@
 stripe:
   trialPeriodInDays: 14
-  trialPeriodPlanId: vusoqngu3xht4x
+  trialPeriodPlanId: pro_plan # Pro
   webhookEndpointSubdomain-dev: "webhookdev"
   webhookEndpointSubdomain-live: "webhooklive"
   SubscriptionPlans: # this list is also used for populating dynamodb items as well
   - name: Free
     sortOrder: 5
-    id: Free
+    id: free_plan
     statementDescriptor: 's6pack- Free' #this will appear on billing statements- max 22 characters in length
     featureList: 'One User'
     metadata: 
@@ -15,7 +15,7 @@ stripe:
     price: 0 #anything with a price of 0 will not add a price record to stripe
   - name: Basic
     sortOrder: 10
-    id: w012xru2xsz99
+    id: basic_plan
     statementDescriptor: 's6pack- Basic Plan' #this will appear on billing statements- max 22 characters in length
     featureList: 'One User'
     metadata: 
@@ -24,7 +24,7 @@ stripe:
     price: 299 
   - name: Pro
     sortOrder: 20
-    id: sdv556h7Hfyzo4 #unique id for each plan. live_ and dev_ prefixes wil be added, and will also be added to metadata so that Stripe payment_intents can be easily searched
+    id: pro_plan #unique id for each plan. live_ and dev_ prefixes wil be added, and will also be added to metadata so that Stripe payment_intents can be easily searched
     statementDescriptor: 's6pack- Pro Plan'
     featureList: 'Three Users'
     metadata: 
@@ -33,7 +33,7 @@ stripe:
     price: 499
   - name: Business
     sortOrder: 30
-    id: vusoqngu3xht4x
+    id: business_plan
     statementDescriptor: 's6pack- Biz Plan'
     featureList: 'Five Users'
     metadata: 
@@ -42,7 +42,7 @@ stripe:
     price: 999
   - name: Enterprise
     sortOrder: 40
-    id: pcb58xb3mfuwxr
+    id: enterprise_plan
     statementDescriptor: 's6pack- Ent Plan'
     featureList: 'Ten Users'
     metadata: 

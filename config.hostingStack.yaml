@@ -1,34 +1,5 @@
 #the prefix used for SSM Parameter Store 
 parameterStorePrefix: /global/parameters/
-#
-# Set up SSM Parameter Store using the AWS console in the defaultRegion with the following 
-# parameters using json syntax (example parameters included below, change values with your own) eg:
-#
-# /global/parameters/testUsername = "test@test.com" // dummy email address if responses are not necessary
-# /global/parameters/contactUsEmail-dev = "testp+contactUsTest@test.com"
-# /global/parameters/contactUsEmail-live = "test+production@test.com"
-# /global/parameters/testPassword = "R123xyz123-!"
-# /global/parameters/testEmailAddressForTestingResponses = "test-your-valid-email@gmail.com" //valid email address for testing responses
-# /global/parameters/recaptchaSiteSecret = 6Lxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx (see https://blog.logrocket.com/implement-recaptcha-react-application/)
-
-#### the following will be output in the terraform output cli once you've deployed dataStackDev and dataStackLive (see readme.md/documentation)
-# /global/parameters/stripeToken-dev = "sk_test_xxxxxxxxxxxxxxxxxxxxxxxxxxxx" // https://dashboard.stripe.com/test/apikeys
-# /global/parameters/stripeToken-live = "sk_live_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" //if you do not have live mode set up yet, you can use the test key here also
-# /global/parameters/stripeWebhookSigningSecret-dev = "whsec_xxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-# /global/parameters/stripeWebhookSigningSecret-live = "whsec_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" //if you do not have live mode set up yet, you can use the test key here also
-# /global/parameters/testUserPoolId = "us-east-2_dcm0srgevu"
-# /global/parameters/testFreeTrialPlanId = "dev_vusoqngu3xht4x" //free trial plan id (eg: Business Plan)
-# /global/parameters/testPaidPlanId = "dev_vusoyyyyyyyyy" //paid plan id (eg: Pro Plan)
-# /global/parameters/testFreePlanId = "dev_vusozzzzzzzzz" //free plan id (eg: Free Plan)
-# /global/parameters/testCognitoClientId = "2i17xxxxxxxxxxxxxxxxxxxxxxxxxx"
-# /global/parameters/testIdentityPoolId = "us-east-2:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-# /global/parameters/testUserPoolWebClientId = "63xxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-#
-# This is not the most secure way to do this since values (even secureString) are stored as plain text
-# in the raw tf state file. There are methods to secure it better like Secrets Manager (more money)
-# or remote state storage (eg on S3)
-#
-
 hostedZone: s6pack.build
 sesMailDomain: mail.s6pack.build
 graphqlApiUrl: api.s6pack.build
