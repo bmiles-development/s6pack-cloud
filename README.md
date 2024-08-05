@@ -16,7 +16,12 @@ Full deployment time will take roughly an hour with manual steps between (requir
  3) Create AWS [SSM Parameter Store](https://us-east-1.console.aws.amazon.com/systems-manager/parameters) for the first section of parameters outlined in the config.hostingStack.yaml comments.Modify the parameters in the following config files to match your application: config.hostingStack.yaml, config.dataStack.yaml and config.webStack.yaml
  4) Install AWS, Stripe and dependant CDKTF providers. run ```cdktf get``` to install the providers.
  5) run ```cdktf deploy tfStateBackupStack --auto-approve``` this will setup the state store on S3 instead of on your local machine. This is for a bunch of good reasons, including better security and avoiding syncing issues when developing with a team.
- 6) open the file ./stacks/tfStateBackup/TFStateBackupStack.ts and remove the open and closing comments from this block of code: 
+ 6) open the file ./stacks/tfStateBackup/TFStateBackupStack.ts and remove the open and closing comment tags from this block of code: 
+    ```
+    // import (S3Backend) from "cdktf" 
+    ```
+
+    and also this one:
     ```
     /*
     new S3Backend(this, {
