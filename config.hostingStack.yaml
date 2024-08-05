@@ -8,6 +8,12 @@ parameterStorePrefix: /global/parameters/
 # /global/parameters/contactUsEmail-dev = "testp+contactUsTest@test.com"
 # /global/parameters/contactUsEmail-live = "test+production@test.com"
 # /global/parameters/testPassword = "R123xyz123-!"
+# /global/parameters/stripeToken-dev = "sk_test_xxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+# /global/parameters/stripeToken-live = "sk_live_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" //if you do not have live mode set up yet, you can use the test key here also
+# /global/parameters/stripeWebhookSigningSecret-dev = "whsec_xxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+# /global/parameters/stripeWebhookSigningSecret-live = "whsec_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" //if you do not have live mode set up yet, you can use the test key here also
+# /global/parameters/recaptchaSiteSecret = 6Lxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx (see https://blog.logrocket.com/implement-recaptcha-react-application/)
+# /global/parameters/testEmailAddressForTestingResponses = "test-your-valid-email@gmail.com"
 
 #### the following will be output in the terraform output cli once you've deployed dataStackDev and dataStackLive (see readme.md/documentation)
 # /global/parameters/testUserPoolId = "us-east-2_dcm0srgevu"
@@ -16,13 +22,7 @@ parameterStorePrefix: /global/parameters/
 # /global/parameters/testFreePlanId = "dev_vusozzzzzzzzz" //free plan id (eg: Free Plan)
 # /global/parameters/testCognitoClientId = "2i17xxxxxxxxxxxxxxxxxxxxxxxxxx"
 # /global/parameters/testIdentityPoolId = "us-east-2:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-# /global/parameters/testUserPoolWebClientId = "63xxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-# /global/parameters/stripeToken-dev = "sk_test_xxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-# /global/parameters/stripeToken-live = "sk_live_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" //if you do not have live mode set up yet, you can use the test key here also
-# /global/parameters/stripeWebhookSigningSecret-dev = "whsec_xxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-# /global/parameters/stripeWebhookSigningSecret-live = "whsec_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" //if you do not have live mode set up yet, you can use the test key here also
-# /global/parameters/recaptchaSiteSecret = 6Lxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx (see https://blog.logrocket.com/implement-recaptcha-react-application/)
-# /global/parameters/testEmailAddressForTestingResponses = "test-your-valid-email@gmail.com"
+# /global/parameters/testUserPoolWebClientId = "63xxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 #
 # This is not the most secure way to do this since values (even secureString) are stored as plain text
 # in the raw tf state file. There are methods to secure it better like Secrets Manager (more money)
