@@ -38,7 +38,7 @@ const backendStateS3BucketName = config['hostingStack']['logBucketNamePrefix']+"
 new TFStateBackupStack(
   app,
   "tfStateBackupStack",
-  backendStateS3BucketName
+  backendStateS3BucketName,
   config['hostingStack'].defaultRegion
 )
 
