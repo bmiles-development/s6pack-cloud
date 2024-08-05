@@ -33,6 +33,6 @@ hostedZone: s6pack.build
 sesMailDomain: mail.s6pack.build
 graphqlApiUrl: api.s6pack.build
 testGraphQlEndpoint: https://apidev.s6pack.build/graphql
-defaultRegion: us-east-2
+defaultRegion: us-west-1
 logBucketNamePrefix: s6pack-build
 logRetentionPeriod: 90 #days
