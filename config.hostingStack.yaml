@@ -8,6 +8,7 @@ parameterStorePrefix: /global/parameters/
 # /global/parameters/contactUsEmail-dev = "testp+contactUsTest@test.com"
 # /global/parameters/contactUsEmail-live = "test+production@test.com"
 # /global/parameters/testPassword = "R123xyz123-!"
+
 #### the following will be output in the terraform output cli once you've deployed dataStackDev and dataStackLive (see readme.md/documentation)
 # /global/parameters/testUserPoolId = "us-east-2_dcm0srgevu"
 # /global/parameters/testFreeTrialPlanId = "dev_vusoqngu3xht4x" //free trial plan id (eg: Business Plan)
