@@ -30,13 +30,14 @@ Full deployment time will take roughly an hour with manual steps between (requir
       region: region
     })*/
     ```
-    then run ```cdktf deploy tfStateBackupStack --auto-approve```. This is necessary to avoid the chicken-or-the-egg problen of storing the tfStateBackupStack.tfState files on the tfStateBackupStack itself.
- 7) TODO might have to comment out the S3Backend function first before initially run- see the chicken or the egg problem with remote backend infrastructure in the same project.
- 8) run: ```cdktf deploy hostingStack --auto-approve``` follow DNS instructions in the TerraformOutput (copy the Hosted Zone SN records into your domain name host DNS, if you do not do this the next stack deployment will fail)
- 9) run ```cdktf deploy dataStackLive dataStackDev --auto-approve --ignore-missing-stack-dependencies```
- 10) run ```cdktf deploy webStackBlue webStackGreen webStackDev --auto-approve --ignore-missing-stack-dependencies``` 
- 11) run ```cdktf deploy blueGreenToggleStack --auto-approve --ignore-missing-stack-dependencies```
- 12) if you toggle your blue/green stack, just running: ```cdktf deploy blueGreenToggleStack --auto-approve --ignore-missing-stack-dependencies``` may give you cross-stack-output errors, so just deploy the stack you are toggling to and it will update the cross-stack-output data and then NOT throw an error.  
+ 7) run ```cd cdktf.out/stacks/tfStateBackupStack && terraform init -migrate-state``` then answer ```yes``` at the prompt
+ 8) run ```cd ../../../```
+ 9) run ```cdktf deploy tfStateBackupStack --auto-approve```. This is necessary to avoid the chicken-or-the-egg problen of storing the tfStateBackupStack.tfState files on the tfStateBackupStack itself.
+ 10) run: ```cdktf deploy hostingStack --auto-approve``` follow DNS instructions in the TerraformOutput (copy the Hosted Zone SN records into your domain name host DNS, if you do not do this the next stack deployment will fail)
+ 11) run ```cdktf deploy dataStackLive dataStackDev --auto-approve --ignore-missing-stack-dependencies```
+ 12) run ```cdktf deploy webStackBlue webStackGreen webStackDev --auto-approve --ignore-missing-stack-dependencies``` 
+ 13) run ```cdktf deploy blueGreenToggleStack --auto-approve --ignore-missing-stack-dependencies```
+ 14) if you toggle your blue/green stack, just running: ```cdktf deploy blueGreenToggleStack --auto-approve --ignore-missing-stack-dependencies``` may give you cross-stack-output errors, so just deploy the stack you are toggling to and it will update the cross-stack-output data and then NOT throw an error.  
 
 
 # Possible Deployment Issues
