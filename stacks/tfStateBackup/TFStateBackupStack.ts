@@ -1,5 +1,5 @@
 import {Construct} from "constructs"
-import {S3Backend, TerraformStack} from "cdktf"
+import {TerraformStack} from "cdktf"
 import { AwsProvider } from "@cdktf/provider-aws/lib/provider"
 import { Dynamodb as TFStateDynamoDb } from './infrastructure/aws/dynamodb'
 import { S3 } from "./infrastructure/aws/s3"
