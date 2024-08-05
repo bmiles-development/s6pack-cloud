@@ -1,6 +1,7 @@
 
 
 # Requirements
+* Domain Name
 * npm
 * [CDKTF](https://learn.hashicorp.com/tutorials/terraform/cdktf-install)
 * An Amazon AWS account with a ~/.aws [configuration and credential file settings](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-files.html)
@@ -50,9 +51,15 @@ Full deployment time will take roughly an hour with manual steps between (requir
     ```
     /global/parameters/testEmailAddressForTestingResponses = "test-your-valid-email@valid.com"
     ```
-    Google Recaptcha secret key see https://blog.logrocket.com/implement-recaptcha-react-application/, or just create an account here https://www.google.com/recaptcha/admin/create 
+    Google Recaptcha secret key see: https://blog.logrocket.com/implement-recaptcha-react-application/ , or just create an account here https://www.google.com/recaptcha/admin/create .
+
     ```
-    /global/parameters/recaptchaSiteSecret = 6Lxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+    /global/parameters/recaptchaSiteSecret-live = 6Lxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+    ```
+    For localhost captcha testing see: https://developers.google.com/recaptcha/docs/faq#id-like-to-run-automated-tests-with-recaptcha.-what-should-i-do
+    ```
+    /global/parameters/recaptchaSiteSecret-dev = 6LeIxAcTAAAAAGG-vFI1TnRWxMZNFuojJ4WifJWe
+
     ```
     Free plan id, can leave as is or can be customizable (eg: Free Plan see config.dataStack.yaml)
     ```
@@ -76,16 +83,16 @@ Full deployment time will take roughly an hour with manual steps between (requir
         /global/parameters/testUserPoolId = " "
         /global/parameters/testCognitoClientId = " "
         /global/parameters/testIdentityPoolId = " "
-        /global/parameters/testUserPoolWebClientId = " "
         ```
- 11) run: ```cdktf deploy hostingStack --auto-approve``` follow DNS instructions in the TerraformOutput (copy the Hosted Zone SN records into your domain name host DNS, if you do not do this the next stack deployment will fail)
+ 11) run: ```cdktf deploy hostingStack --auto-approve``` follow DNS instructions in the TerraformOutput under "rout53HostedZone". You will see it at the end of the cli output in the terminal when the deployment has successfully complete. (copy the Hosted Zone SN records into your domain name host DNS, if you do not do this the next stack deployment will fail). 
+    ** You may get an error regarding S3 ACL permissions. Just try to deploy the hosting stack again after a minute or two since deploymnt deployment timing on AWS can be out of sync. 
  12) run ```cdktf deploy dataStackLive dataStackDev --auto-approve --ignore-missing-stack-dependencies```
- 13) Populate the empty Parameter Store parameters from step 10 using the cdktf deploy output in the terminal:
+ 13) After deployment has completed, populate the empty Parameter Store parameters in step 10 using the TerraformOutput displayed in the terminal:
+
         ```
         /global/parameters/testUserPoolId = "us-east-2_dcm0srgevu"
         /global/parameters/testCognitoClientId = "2i17xxxxxxxxxxxxxxxxxxxxxxxxxx"
         /global/parameters/testIdentityPoolId = "us-west-2:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-        /global/parameters/testUserPoolWebClientId = "63xxxxxxxxxxxxxxxxxxxxxxxxxxxxx
         ```
         
         find the stripe api tokens here: https://dashboard.stripe.com/test/apikeys . Toggle Test Mode to "on" to get the dev token

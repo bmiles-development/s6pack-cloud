@@ -9,7 +9,6 @@ import { CognitoIdentityPool } from '@cdktf/provider-aws/lib/cognito-identity-po
 export class Cognito extends Construct {
     public readonly userPool: CognitoUserPool;
     public readonly userPoolArn: string;
-    //public readonly userPoolClientSecret: string;
     public readonly userPoolClientId: string;
     public readonly userPoolClientOauthScopes: string[];
     
@@ -97,8 +96,9 @@ export class Cognito extends Construct {
             }]
         })
 
-        new TerraformOutput(this, 'UserPoolARN', { value: userPool.arn })
-        new TerraformOutput(this, 'UserPoolClientId-GeneratedSecretClient', { value: client.id })
+        new TerraformOutput(this, 'UserPoolId', { value: userPool.id })
+        new TerraformOutput(this, 'IdentityPoolId', { value: this.identityPool.id })
+        new TerraformOutput(this, 'CognitoClientId', { value: client.id })
         
         this.userPool = userPool
         this.userPoolArn = userPool.arn

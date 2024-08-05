@@ -94,7 +94,6 @@ export async function GetConfigVars(Amplify) {
     "testPaidPlanId",
     "testFreePlanId",
     "testIdentityPoolId",
-    "testUserPoolWebClientId",
     "testEmailAddressForTestingResponses",
   ];
 
@@ -122,7 +121,7 @@ export async function GetConfigVars(Amplify) {
       region: configVars.defaultRegion,
       identityPoolRegion: configVars.defaultRegion,
       userPoolId: configVars.testUserPoolId,
-      userPoolWebClientId: configVars.testUserPoolWebClientId,
+      userPoolWebClientId: configVars.testCognitoClientId,
       mandatorySignIn: false,
       signUpVerificationMethod: "code",
       authenticationFlowType: "USER_PASSWORD_AUTH",
