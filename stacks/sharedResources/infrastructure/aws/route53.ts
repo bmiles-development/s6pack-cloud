@@ -24,7 +24,7 @@ export class Route53 extends Construct {
 
     public addS3CloudfrontDomainRoute53Record(s3WebsiteDomainName:string, cloudFrontAlias:string, route53ZoneId:string, cloudfrontZoneId:string){
         //cloudfront formation association used for appsync custom domain
-        let config = {
+        new Route53Record(this, s3WebsiteDomainName+"-s3-custom-domain",  {
             zoneId: route53ZoneId,
             name: s3WebsiteDomainName,
             type: "A",
@@ -33,8 +33,7 @@ export class Route53 extends Construct {
                 zoneId: cloudfrontZoneId,
                 evaluateTargetHealth: true
             }]
-        }
-        new Route53Record(this, s3WebsiteDomainName+"-s3-custom-domain", config)
+        })
     }
 
 }
