@@ -17,17 +17,18 @@ export class TFStateBackupStack extends TerraformStack {
     super(scope, name);
     new AwsProvider(this, "aws", { region: region });
 
-
-    this._s3Resource = new S3(this, "tfStateBackupS3", backendStateS3BucketName)
-
-    this._dynamoDb = new TFStateDynamoDb(this, 'tfStateBackupStack')
-
     /*
     new S3Backend(this, {
       bucket: backendStateS3BucketName,
       key: name,
       region: region
     })*/
+
+    this._s3Resource = new S3(this, "tfStateBackupS3", backendStateS3BucketName)
+
+    this._dynamoDb = new TFStateDynamoDb(this, 'tfStateBackupStack')
+
+    
   }
   
 }
