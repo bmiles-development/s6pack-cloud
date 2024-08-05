@@ -14,11 +14,11 @@ export class Route53 extends Construct {
             zoneId: route53ZoneId,
             name: appsyncDomainName,
             type: "A",
-            alias: [{
+            alias: {
                 name: appsyncCloudfrontUrl,
                 zoneId: appsyncZoneId,
                 evaluateTargetHealth: true
-            }]
+            }
         })
     }
 
@@ -28,11 +28,11 @@ export class Route53 extends Construct {
             zoneId: route53ZoneId,
             name: s3WebsiteDomainName,
             type: "A",
-            alias: [{
+            alias: {
                 name: cloudFrontAlias,
                 zoneId: cloudfrontZoneId,
                 evaluateTargetHealth: true
-            }]
+            }
         })
     }
 
