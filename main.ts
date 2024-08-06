@@ -90,6 +90,7 @@ const dataStackDev = new DataStack(
 webStacks[config['webStackDev'].name] = new WebStack(
   app,
   config['webStackDev'].name,
+  config['hostingStack'].defaultRegion,
   config['webStackDev'],
   hostingStack,
   dataStackDev,
@@ -104,6 +105,7 @@ webStacks[config['webStackDev'].name] = new WebStack(
 webStacks[config['webStackGreen'].name] = new WebStack(
   app,
   config['webStackGreen'].name,
+  config['hostingStack'].defaultRegion,
   config['webStackGreen'],
   hostingStack,
   dataStackLive,
@@ -118,6 +120,7 @@ webStacks[config['webStackGreen'].name] = new WebStack(
 webStacks[config['webStackBlue'].name] = new WebStack(
   app,
   config['webStackBlue'].name,
+  config['hostingStack'].defaultRegion,
   config['webStackBlue'],
   hostingStack,
   dataStackLive,

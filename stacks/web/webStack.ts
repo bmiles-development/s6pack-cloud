@@ -45,7 +45,8 @@ export class WebStack extends TerraformStack {
 
     constructor(
         scope: Construct, 
-        stackName: string, 
+        stackName: string,
+        region: string, 
         config: any, 
         hostingStack: any, 
         dataStack: any, 
@@ -61,21 +62,21 @@ export class WebStack extends TerraformStack {
       new S3Backend(this, {
         bucket: backendStateS3BucketName,
         key: stackName,
-        region: config.region
+        region: region
       })
   
       /* resources */
       this._config = config
-      new AwsProvider(this, "aws", { region: config.region });
+      new AwsProvider(this, "aws", { region: region });
       new StripeProvider (this, "stripe-"+stackName, {apiToken: stripeToken})
       let envVars: any = {}
       const dataCallerIdentity = new DataAwsCallerIdentity(this,"dataCallerIdentity",{})
       const accountId = dataCallerIdentity.accountId
       const awsUsEast1Provider = new AwsProvider(this, "awsUse1", { alias: 'use1',region: 'us-east-1' });  //Hard code a us-east-1 for cloudfront ssl certs (only available in us-east-1)
-      const iamResource = new Iam(this, "Iam", accountId, config.region, stackName)
+      const iamResource = new Iam(this, "Iam", accountId, region, stackName)
       const schemaFile = readFileSync(join(stackPath,"interface","controller-appsync","schema.graphql"), 'utf-8')
-      const appsyncController = new AppSyncGraphqlController(this, "AppSyncGraphqlController",accountId, config.region, stackName, join(stackPath,"interface","controller-appsync"))
-      const lambdaResource = new Lambda(this, stackName, config.region, accountId, iamResource.roles['lambdaServiceRole'].arn, "_LambdaStepFunctions", dataStack.cloudwatchResource)
+      const appsyncController = new AppSyncGraphqlController(this, "AppSyncGraphqlController",accountId, region, stackName, join(stackPath,"interface","controller-appsync"))
+      const lambdaResource = new Lambda(this, stackName, region, accountId, iamResource.roles['lambdaServiceRole'].arn, "_LambdaStepFunctions", dataStack.cloudwatchResource)
       
       const lambdaLayersResource = new LambdaLayers(this, stackName+"-lambdaLayers")
       const webhookSubdomainName =  "webhook"+config.subdomainName // this must match the stripe webhook endpoint in the dataStackDev stack for  testing endpoints to work
@@ -103,13 +104,13 @@ export class WebStack extends TerraformStack {
       const planService = new PlanService(this, "plan_service", dataStack.name, freePlanDBKey, stripeApiEntity, join(stackPath,"app","service-plan", "stepFunctionDefinitions"), String(stripeTrialPeriodInDays), trialPeriodCalculationFunction, selectPlanIdByProcessorPlanIdFunction)
       
       /* stacks/web/app Controllers */
-      new StepFunctions(this, "webStackStepFunctions", config.sfn.logLevel, stackName, {...userService.stepFunctionDefinitions, ...planService.stepFunctionDefinitions, ...accountService.stepFunctionDefinitions}, iamResource.roles['stepFunctionsServiceRole'].arn, dataStack.cloudwatchResource.stepFunctionLogGroup.arn+":*" , config.region, accountId);
-      this._appsyncResource = new Appsync( this, "appsync", config, schemaFile, appsyncController.graphqlResolvers, iamResource.roles['appsyncServiceRole'].arn, dataStack.cognitoResource.userPool.id, dataStack.cloudwatchResource, stackName);
-      iamResource.addAppsyncIdentityPoolRolesAttachment(stackName, config.region, accountId, dataStack.cognitoResource.identityPool.id, this._appsyncResource.graphqlApi.id);
+      new StepFunctions(this, "webStackStepFunctions", config.sfn.logLevel, stackName, {...userService.stepFunctionDefinitions, ...planService.stepFunctionDefinitions, ...accountService.stepFunctionDefinitions}, iamResource.roles['stepFunctionsServiceRole'].arn, dataStack.cloudwatchResource.stepFunctionLogGroup.arn+":*" , region, accountId);
+      this._appsyncResource = new Appsync( this, "appsync", region, config, schemaFile, appsyncController.graphqlResolvers, iamResource.roles['appsyncServiceRole'].arn, dataStack.cognitoResource.userPool.id, dataStack.cloudwatchResource, stackName);
+      iamResource.addAppsyncIdentityPoolRolesAttachment(stackName, region, accountId, dataStack.cognitoResource.identityPool.id, this._appsyncResource.graphqlApi.id);
   
       /* stacks/web/app Gateways - stripe webhook lambda url and cloudfront to appsync. */  
       
-      iamResource.addAppsyncAccessPolicyToLambdaRole(stackName, config.region, accountId, this._appsyncResource.graphqlApi.id, ['cancelPlanPeriodEndedWebhook']);
+      iamResource.addAppsyncAccessPolicyToLambdaRole(stackName, region, accountId, this._appsyncResource.graphqlApi.id, ['cancelPlanPeriodEndedWebhook']);
       envVars =  lambdaResource.defaultEnvVars
       envVars.GRAPHQL_API_ENDPOINT = 'https://'+config.appsyncDomainName+'/graphql';
       envVars.LAMBDA_URL_ACCESS_UUID = config.lambdaUrlAccessUuid
@@ -117,7 +118,7 @@ export class WebStack extends TerraformStack {
       const cloudfrontViewerRequestIpAllowFunctionArn = lambdaResource.CreateEdgeLambdaNodeJsFunction(awsUsEast1Provider, "cloudfrontViewerRequestIpAllowFunction", join(stackPath,"interface", "gateway-lambdaUrl"), [], iamResource.roles['lambdaServiceRole'].arn)
 
       const gatewayFunctionUrlResource = new LambdaFunctionUrl(this, "stripeWebhookGatewayLambdaFunctionUrl",{functionName : queryAppsyncGatewayFunctionArn, authorizationType : "NONE"}) 
-      const webhookFunctionUrlDomain = gatewayFunctionUrlResource.urlId+".lambda-url."+config.region+".on.aws"
+      const webhookFunctionUrlDomain = gatewayFunctionUrlResource.urlId+".lambda-url."+region+".on.aws"
       
       // hosting, logging, waf section - maybe move to a separate stack
       const cloudfront:Cloudfront = new Cloudfront(this, stackName+"webhook")

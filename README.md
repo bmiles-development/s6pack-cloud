@@ -89,8 +89,9 @@ Full deployment time will take roughly an hour with manual steps between (requir
         ** You may get an error regarding S3 ACL permissions Just try to deploy the hosting stack again after a minute or two since  deployment timing on AWS can be out of sync. 
 
         ** If you get an error "from Amazon SES when attempting to send email", you may have Amazon SES identity status verification pending. This verification may take up to an hour. Check verification status here (verify your region in the url): https://us-west-1.console.aws.amazon.com/ses/home?region=us-west-1#/identities
- 12) run ```cdktf deploy dataStackDev --auto-approve --ignore-missing-stack-dependencies```
- 13) After deployment has completed, populate the following Parameter Store parameters from step 10 using the TerraformOutput displayed in the terminal:
+ 12) Before deploying the dataStacks, you need to complete the business profile in the [Stripe Dashboard](https://dashboard.stripe.com/). Otherwise, the terraform commands will not have access to the live site, only the sandbox site and you will get errors. The only way to fix the errors is to cd into the cdktf.out/stacks/{your stack in question} and run these commands to pull, edit the state file directly (remove the json block in question) and push. See: https://developer.hashicorp.com/terraform/cli/commands/state/push
+ 13) run ```cdktf deploy dataStackDev --auto-approve --ignore-missing-stack-dependencies```
+ 14) After deployment has completed, populate the following Parameter Store parameters from step 10 using the TerraformOutput displayed in the terminal:
     The following will be listed under the dataStackDev TerraformOutput:
         In the terminal, look for dataStackDev Outputs: dataStackDev_CognitoClientId_XXXXXX = "value-to-copy-here" and copy the value to this parameter:
         ```
@@ -127,9 +128,10 @@ Full deployment time will take roughly an hour with manual steps between (requir
         ```
 
  15) You can now request to SES production access to AWS [here](https://docs.aws.amazon.com/ses/latest/dg/request-production-access.html?icmpid=docs_ses_console). This will allow you to send emails unrestricted. 
- 16) run ```cdktf deploy webStackDev webStackBlue webStackGreen --auto-approve --ignore-missing-stack-dependencies``` 
- 17) run ```cdktf deploy blueGreenToggleStack --auto-approve --ignore-missing-stack-dependencies```
- 18) if you toggle your blue/green stack, just running: ```cdktf deploy blueGreenToggleStack --auto-approve --ignore-missing-stack-dependencies``` may give you cross-stack-output errors, so just deploy the stack you are toggling to (eg: if blue then deploy webStackBlue first) and it will update the cross-stack-output data and then NOT throw an error.  
+ 16) run ```cdktf deploy webStackDev --auto-approve --ignore-missing-stack-dependencies``` 
+ 17) run ```cdktf deploy webStackBlue webStackGreen --auto-approve --ignore-missing-stack-dependencies```
+ 18) run ```cdktf deploy blueGreenToggleStack --auto-approve --ignore-missing-stack-dependencies```
+ 19) if you toggle your blue/green stack, just running: ```cdktf deploy blueGreenToggleStack --auto-approve --ignore-missing-stack-dependencies``` may give you cross-stack-output errors, so just deploy the stack you are toggling to (eg: if blue then deploy webStackBlue first) and it will update the cross-stack-output data and then NOT throw an error.  
 
 
 # Possible Deployment Issues

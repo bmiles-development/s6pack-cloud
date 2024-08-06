@@ -1,6 +1,6 @@
 import { Construct } from 'constructs';
-import {AppsyncGraphqlApi} from '../../../../.gen/providers/aws/appsync-graphql-api'
-import {AppsyncResolver} from '../../../../.gen/providers/aws/appsync-resolver'
+import {AppsyncGraphqlApi} from '@cdktf/provider-aws/lib/appsync-graphql-api'
+import {AppsyncResolver} from '@cdktf/provider-aws/lib/appsync-resolver'
 import { AppsyncDatasource } from '@cdktf/provider-aws/lib/appsync-datasource'
 
 export class Appsync extends Construct {
@@ -15,7 +15,7 @@ export class Appsync extends Construct {
         return this._appsyncDomainName
     }
 
-    constructor(scope: Construct, name: string, config: any, schemaFile: any, resolvers:any, appsyncServiceRoleArn: any, cognitoUserPoolId:string, cloudwatchResource:any, stackName:string) {
+    constructor(scope: Construct, name: string, region:string, config: any, schemaFile: any, resolvers:any, appsyncServiceRoleArn: any, cognitoUserPoolId:string, cloudwatchResource:any, stackName:string) {
         super(scope, name)
         this._appsyncDomainName = config.appsyncDomainName
         this.graphqlApi = new AppsyncGraphqlApi(this, config.name+'_graphql_api', {
@@ -28,7 +28,7 @@ export class Appsync extends Construct {
             //    authorizerUri: lambdaArnForAuthorizer
             //},
             userPoolConfig : {
-                awsRegion : config.region,
+                awsRegion : region,
                 defaultAction : config.appsync.defaultAction,
                 userPoolId : cognitoUserPoolId
             },
@@ -59,11 +59,11 @@ export class Appsync extends Construct {
             type: "HTTP",
             serviceRoleArn: appsyncServiceRoleArn,
             httpConfig:{
-                endpoint: "https://sync-states."+config.region+".amazonaws.com/",
+                endpoint: "https://sync-states."+region+".amazonaws.com/",
                 authorizationConfig:{
                     authorizationType: "AWS_IAM",
                     awsIamConfig: {
-                        signingRegion: config.region,
+                        signingRegion: region,
                         signingServiceName: "states"
                     }
                 }

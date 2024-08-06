@@ -10,7 +10,7 @@ export class StripeWebhookEndpoint extends Construct {
 
   constructor(scope: Construct, name: string, url:string, httpScheme:string) {
     super(scope,name)
-    this._webhookEndpoint = new WebhookEndpoint(this, name, {
+    this._webhookEndpoint = new WebhookEndpoint(this, name+"1", {
       url: httpScheme+url,
       enabledEvents: [
         "charge.dispute.created",
