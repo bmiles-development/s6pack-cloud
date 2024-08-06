@@ -91,7 +91,7 @@ export class DataStack extends TerraformStack {
 
       /* stacks/web/data Services */
       const authenticateService = new AuthenticateService(this, "data-stack-authenticate-step-functions", this._cognitoEntity, stackName, join(stackPath,"app","service-authenticate","stepFunctionDefinitions"), freePlanDBKey)
-      new StepFunctions(this, "dataStackStepFunctions", config.sfn.logLevel, stackName, {...authenticateService.stepFunctionDefinitions}, this._iamResource.roles['stepFunctionsServiceRole'].arn, this._cloudwatchResource.stepFunctionLogGroup.arn+":*" , config.region, accountId);
+      new StepFunctions(this, "dataStackStepFunctions", config.sfn.logLevel, stackName, {...authenticateService.stepFunctionDefinitions}, this._iamResource.roles['stepFunctionsServiceRole'].arn, this._cloudwatchResource.stepFunctionLogGroup.arn+":*" , defaultRegion, accountId);
       
       /* logging */
       new CloudwatchQueryDefinition(this, "stepfunction_cloudwatch_query", {

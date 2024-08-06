@@ -114,7 +114,10 @@ export class Cloudwatch extends Construct {
          return logGroup
      }
 
-     //TODO maybe generate this code dynamically based on the log groups. Currently this function is not being used
+     //TODO maybe generate this code dynamically based on the log groups.
+     //or use a json file and an Fn import fuction so we can use tf variables. 
+     //Currently this function is not being used
+
      public cloudwatchDashboardSource(){
         return `{
             "widgets": [
