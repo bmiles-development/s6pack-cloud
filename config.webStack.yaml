@@ -1,6 +1,5 @@
 webStackDev:
   name: webStackDev #if you change this, run cdktf destroy on this stack first! "keep less than 24 characters in length, must match pattern [_A-Za-z][_0-9A-Za-z]*
-  region: us-east-2
   subdomainName: dev #lowercase only
   appsyncDomainName: apidev.s6pack.build
   s3WebsiteDomainName: dev.s6pack.build
@@ -14,7 +13,6 @@ webStackDev:
     defaultAction: ALLOW
 webStackBlue:
   name: webStackBlue #if you change this, run cdktf destroy on this stack first! "keep less than 24 characters in length, must match pattern [_A-Za-z][_0-9A-Za-z]*
-  region: us-east-2
   subdomainName: blue #lowercase only
   appsyncDomainName: apiblue.s6pack.build
   s3WebsiteDomainName: blue.s6pack.build
@@ -28,7 +26,6 @@ webStackBlue:
     defaultAction: ALLOW
 webStackGreen:
   name: webStackGreen #if you change this, run cdktf destroy on this stack first! "keep less than 24 characters in length, must match pattern [_A-Za-z][_0-9A-Za-z]*
-  region: us-east-2
   subdomainName: green #lowercase only
   appsyncDomainName: apigreen.s6pack.build
   s3WebsiteDomainName: green.s6pack.build
