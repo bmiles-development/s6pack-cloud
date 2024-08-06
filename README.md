@@ -72,8 +72,16 @@ Full deployment time will take roughly an hour with manual steps between (requir
     free trial plan id (eg: Business Plan, see config.dataStack.yaml)
     ```
     /global/parameters/testFreeTrialPlanId = "business_plan" 
-    
     ```
+    Generate a [random UUID](https://www.uuidgenerator.net/) and place in here:
+    ``` 
+    cloudfrontLambdaUrlAccessUuid-live = "{UUID Here}"
+    ```
+    Generate another [random UUID](https://www.uuidgenerator.net/) and place in here:
+    ``` 
+    cloudfrontLambdaUrlAccessUuid-dev = "{UUID Here}"
+    ```
+
  10) create emplty values for these parameters for now, we will poplulate them later once they have been created:
         ```
         /global/parameters/stripeToken-dev = " " 

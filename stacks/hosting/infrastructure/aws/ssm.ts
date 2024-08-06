@@ -60,7 +60,15 @@ export class Ssm extends Construct {
         this._parameters['stripeWebhookSigningSecret-live'] = new DataAwsSsmParameter(this, "stripeWebhookSigningSecretLive",{
             name : parameterStorePrefix+"stripeWebhookSigningSecret-live"
         }).value
+
+        this._parameters['cloudFrontLambdaUrlAccessUuid-dev'] = new DataAwsSsmParameter(this, "cloudFrontLambdaUrlAccessUuidDev",{
+            name : parameterStorePrefix+"cloudFrontLambdaUrlAccessUuid-live"
+        }).value
           
+        this._parameters['cloudFrontLambdaUrlAccessUuid-dev'] = new DataAwsSsmParameter(this, "cloudFrontLambdaUrlAccessUuidLive",{
+            name : parameterStorePrefix+"cloudFrontLambdaUrlAccessUuid-dev"
+        }).value
+
         //get acountId and add it to parameters
         const identity = new DataAwsCallerIdentity(this, "identity")
         this._parameters['accountId'] = identity.accountId

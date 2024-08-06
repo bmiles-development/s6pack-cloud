@@ -99,7 +99,8 @@ webStacks[config['webStackDev'].name] = new WebStack(
   backendStateS3BucketName,
   hostingStack.ssmResource.parameters["stripeToken-dev"],
   hostingStack.ssmResource.parameters['contactUsEmail-dev'],
-  "dev_Free"
+  "dev_Free",
+  hostingStack.ssmResource.parameters['cloudfrontLambdaUrlAccessUuid-dev'],
 );
 
 webStacks[config['webStackGreen'].name] = new WebStack(
@@ -114,7 +115,8 @@ webStacks[config['webStackGreen'].name] = new WebStack(
   backendStateS3BucketName,
   hostingStack.ssmResource.parameters["stripeToken-live"],
   hostingStack.ssmResource.parameters["contactUsEmail-live"],
-  "live_Free"
+  "live_Free",
+  hostingStack.ssmResource.parameters['cloudfrontLambdaUrlAccessUuid-live'],
 );
 
 webStacks[config['webStackBlue'].name] = new WebStack(
@@ -129,13 +131,13 @@ webStacks[config['webStackBlue'].name] = new WebStack(
   backendStateS3BucketName,
   hostingStack.ssmResource.parameters["stripeToken-live"],
   hostingStack.ssmResource.parameters["contactUsEmail-live"],
-  "live_Free"
+  "live_Free",
+  hostingStack.ssmResource.parameters['cloudfrontLambdaUrlAccessUuid-live'],
 );
 
 ////the blueGreenToggleStack is infrastructure for simplifying Blue/Green domain name switching via the config['hostingStack'].currentLiveStack setting
  const currentLiveAppStackName = config['blueGreenToggleStack'].currentLiveAppStackName
-
-
+ 
 
 new blueGreenToggleStack(
   app,
