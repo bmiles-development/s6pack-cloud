@@ -26,7 +26,6 @@
 incomplete. Documentation Repository [Here](https://github.com/bmiles-development/s6pack)
 
 
-
 # Requirements
 * Domain Name
 * npm
@@ -172,7 +171,7 @@ Full deployment time will take roughly an hour with manual steps between (requir
  19) if you toggle your blue/green stack, just running: ```cdktf deploy blueGreenToggleStack --auto-approve --ignore-missing-stack-dependencies``` may give you cross-stack-output errors, so just deploy the stack you are toggling to (eg: if blue then deploy webStackBlue first) and it will update the cross-stack-output data and then NOT throw an error.  
 
 # Post Deployment setup requirements
-"Request SES Production Access" from your SES Account Dashboard Page [here](https://docs.aws.amazon.com/ses/latest/dg/request-production-access.html?icmpid=docs_ses_console) and/or add any test email addresses to the "verified identities" page. Otherwise addAdminUser and addStandardUser unit tests will fail
+"Request SES Production Access" from your SES Account Dashboard Page [here](https://docs.aws.amazon.com/ses/latest/dg/request-production-access.html?icmpid=docs_ses_console) and/or add any test email addresses to the "verified identities" page. Otherwise addAdminUser and addStandardUser unit tests will fail.
 
 
 # Possible Deployment Issues
