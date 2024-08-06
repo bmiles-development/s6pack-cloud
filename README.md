@@ -85,25 +85,39 @@ Full deployment time will take roughly an hour with manual steps between (requir
         /global/parameters/testIdentityPoolId = " "
         ```
  11) run: ```cdktf deploy hostingStack --auto-approve``` follow DNS instructions in the TerraformOutput under "rout53HostedZone". You will see it at the end of the cli output in the terminal when the deployment has successfully complete. (copy the Hosted Zone SN records into your domain name host DNS, if you do not do this the next stack deployment will fail). 
-    ** You may get an error regarding S3 ACL permissions. Just try to deploy the hosting stack again after a minute or two since deploymnt deployment timing on AWS can be out of sync. 
- 12) run ```cdktf deploy dataStackLive dataStackDev --auto-approve --ignore-missing-stack-dependencies```
- 13) After deployment has completed, populate the empty Parameter Store parameters in step 10 using the TerraformOutput displayed in the terminal:
+    
+        ** You may get an error regarding S3 ACL permissions Just try to deploy the hosting stack again after a minute or two since  deployment timing on AWS can be out of sync. 
 
+        ** If you get an error "from Amazon SES when attempting to send email", you may have Amazon SES identity status verification pending. This verification may take up to an hour. Check verification status here (verify your region in the url): https://us-west-1.console.aws.amazon.com/ses/home?region=us-west-1#/identities
+ 12) run ```cdktf deploy dataStackDev --auto-approve --ignore-missing-stack-dependencies```
+ 13) After deployment has completed, populate the following Parameter Store parameters from step 10 using the TerraformOutput displayed in the terminal:
+    The following will be listed under the dataStackDev TerraformOutput:
+        In the terminal, look for dataStackDev Outputs: dataStackDev_CognitoClientId_XXXXXX = "value-to-copy-here" and copy the value to this parameter:
         ```
-        /global/parameters/testUserPoolId = "us-east-2_dcm0srgevu"
-        /global/parameters/testCognitoClientId = "2i17xxxxxxxxxxxxxxxxxxxxxxxxxx"
-        /global/parameters/testIdentityPoolId = "us-west-2:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+        /global/parameters/testCognitoClientId = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
         ```
+        the value for dataStackDev_IdentityPoolId_XXXXXX goes here:
+        ```
+        /global/parameters/testIdentityPoolId = "{region-name}:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+        ```
+        the value for dataStackDev_UserPoolId_XXXXXX goes here:
+        ```
+        /global/parameters/testUserPoolId = "{region-name}_xxxxxxxxx"
+        ```
+
+
+ 14) run ```cdktf deploy dataStackLive --auto-approve --ignore-missing-stack-dependencies```
+
         
-        find the stripe api tokens here: https://dashboard.stripe.com/test/apikeys . Toggle Test Mode to "on" to get the dev token
+        Once Deployment is complete, find the stripe api tokens here: https://dashboard.stripe.com/test/apikeys . Toggle Test Mode to "on" to get the dev token and populate the parameters below in Parameter Store:
         ```
         /global/parameters/stripeToken-dev = "sk_test_xxxxxxxxxxxxxxxxxxxxxxxxxxxx" 
         ```
-        Toggle Test Mode to "off" to get the live token (if you do not have live mode set up yet, you can use the test key here also)
+        Toggle Test Mode to "off" to get the live token (if you do not have live mode set up yet, you can use the test key here also):
         ```
         /global/parameters/stripeToken-live = "sk_live_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" 
         ```
-
+        Goto your stripe webhooks here : https://dashboard.stripe.com/test/webhooks/ click the https://webhookdev.yourdomain and look for the "signing secret" and click "Reveal". enter that value in the parameter:
         ```
         /global/parameters/stripeWebhookSigningSecret-dev = "whsec_xxxxxxxxxxxxxxxxxxxxxxxxxxxx"
         ```
@@ -112,9 +126,10 @@ Full deployment time will take roughly an hour with manual steps between (requir
         /global/parameters/stripeWebhookSigningSecret-live = "whsec_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" 
         ```
 
- 14) run ```cdktf deploy webStackDev webStackBlue webStackGreen --auto-approve --ignore-missing-stack-dependencies``` 
- 15) run ```cdktf deploy blueGreenToggleStack --auto-approve --ignore-missing-stack-dependencies```
- 16) if you toggle your blue/green stack, just running: ```cdktf deploy blueGreenToggleStack --auto-approve --ignore-missing-stack-dependencies``` may give you cross-stack-output errors, so just deploy the stack you are toggling to (eg: if blue then deploy webStackBlue first) and it will update the cross-stack-output data and then NOT throw an error.  
+ 15) You can now request to SES production access to AWS [here](https://docs.aws.amazon.com/ses/latest/dg/request-production-access.html?icmpid=docs_ses_console). This will allow you to send emails unrestricted. 
+ 16) run ```cdktf deploy webStackDev webStackBlue webStackGreen --auto-approve --ignore-missing-stack-dependencies``` 
+ 17) run ```cdktf deploy blueGreenToggleStack --auto-approve --ignore-missing-stack-dependencies```
+ 18) if you toggle your blue/green stack, just running: ```cdktf deploy blueGreenToggleStack --auto-approve --ignore-missing-stack-dependencies``` may give you cross-stack-output errors, so just deploy the stack you are toggling to (eg: if blue then deploy webStackBlue first) and it will update the cross-stack-output data and then NOT throw an error.  
 
 
 # Possible Deployment Issues

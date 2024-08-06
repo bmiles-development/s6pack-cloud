@@ -50,6 +50,7 @@ export class HostingStack extends TerraformStack {
       
       this._s3Resource = new S3(this, "website-log-bucket")
       this._s3Resource.CreateCloudfrontLoggingBucket("cloudfront-logs", config.logBucketNamePrefix+"-cloudfront-logs", config.logRetentionPeriod)
+      new TerraformOutput(this, 'HostedZoneId', { value: this._hostedZoneResource.hostedZone.id})
       new TerraformOutput(this, 'S3BucketName', { value: this._s3Resource.s3CloudfrontLoggingBucket.bucketDomainName})
   
     }
