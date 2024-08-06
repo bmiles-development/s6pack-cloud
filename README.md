@@ -11,7 +11,7 @@
 
 Full deployment time will take roughly an hour with manual steps between (required for most error free/seamless experience)
     
-# Installation
+# Quick(ish) Start Installation
  1) clone the project ```git clone git@github.com:bmiles-development/s6pack-cloud.git``` and cd into the project diractory.
  2) run ```npm update```
  3) Install AWS, Stripe and dependant CDKTF providers. run ```cdktf get``` to install the providers.
@@ -69,7 +69,7 @@ Full deployment time will take roughly an hour with manual steps between (requir
     ```
     /global/parameters/testPaidPlanId = "pro_plan"
     ```
-    free trial plan id (eg: Business Plan, see config.dataStack.yaml)
+    Free trial plan id (eg: Business Plan, see config.dataStack.yaml)
     ```
     /global/parameters/testFreeTrialPlanId = "business_plan" 
     ```
