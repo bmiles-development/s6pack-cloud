@@ -8,14 +8,24 @@
 6. Starter
 * Pack
 
+![s6pack](./public/s6pack.svg)
+
 # Features
 * Zero to Millions of users without managing hardware 
 * idling cost at < 60 cents a month 
 * [Clean API archetecture](https://medium.com/perry-street-software-engineering/clean-api-architecture-2b57074084d5) with Infrastructure as Code using [Terraform](https://www.terraform.io/)/[CDKTF](https://developer.hashicorp.com/terraform/cdktf)
 * Multitenant User Management with [AWS Cognito](https://aws.amazon.com/cognito/) and [Stripe](https://stripe.com) Customisable Payment Plans
-  
+* GraphQL endpoints
+* Robust End-to-End testing using example minimal clientApp
+* Fully customizable
 
-![s6pack](./public/s6pack.svg)
+## Client Application
+ [Here](https://github.com/bmiles-development/s6pack-cloud)
+  
+## Full Documentation
+incomplete. Documentation Repository [Here](https://github.com/bmiles-development/s6pack)
+
+
 
 # Requirements
 * Domain Name
