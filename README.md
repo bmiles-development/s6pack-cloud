@@ -1,5 +1,5 @@
 
-# s6pack 
+# s6pack - Cloud App
 1. Serverless
 2. Scalable
 3. Secure
@@ -183,18 +183,6 @@ Running the installation commands above reduce fatal errors related to service s
 - blue/green/devStack,finalizationStack: Appsync Error: error creating Appsync Domain Name API Association: NotFoundException: Domain name not found.
     Appsync Custom Domain Name is still creating. Wait 5 or so minutes and try again.
 
-## Destroying Stacks
-Destroy stacks in the REVERSE order they were deployed to avoid any errors.
-
-run: ```cdktf destroy {stackName}```
-
-Order of stacks when destroying:
-1. blueGreenToggleStack
-2. webStackBlue webStackGreen webStackDev
-3. dataStackLive dataStackDev
-4. hostingStack
-5. tfStateBackupStack
-
 # Tests
 
 ## Example Application Test Setup in the ./tests
@@ -217,8 +205,17 @@ Run Tests
 Run Specific Test
 ```npm test -- -t ./tests/clientApp.test.ts 'test name here' ```
 
-# Multiple deployments
-within main.ts you can see how multiple deployments can be created with seperate config files for each. This is useful for setting up development/production environments. It is defaulted to the "Blue/Green" developlent strategy, but symply changing the config yaml file names and variable names you can achieve essentially any development/production environment strategy.
+# Destroying Stacks
+Destroy stacks in the REVERSE order they were deployed to avoid any errors.
+
+run: ```cdktf destroy {stackName}```
+
+Order of stacks when destroying:
+1. blueGreenToggleStack
+2. webStackBlue webStackGreen webStackDev
+3. dataStackLive dataStackDev
+4. hostingStack
+5. tfStateBackupStack
 
 
 ## Step Function Local Testing 
