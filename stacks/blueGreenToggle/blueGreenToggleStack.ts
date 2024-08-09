@@ -21,10 +21,16 @@ export class blueGreenToggleStack extends TerraformStack {
       liveWebhookDomainName:string
     ){
       super(scope, name);
+      new S3Backend(this, {
+        bucket: backendStateS3BucketName,
+        key: name,
+        region: defaultRegion
+      })
   
       new AwsProvider(this, "aws", { region: defaultRegion });
       const cloudfront:any = new Cloudfront(this, "domain-apex-name-cloudfront-distributions")
       const route53 = new Route53(this, "route53DomainApexName")
+
       //add live direct api access endpoint and toggle that to blue green as well
       const appsyncDomainNameResource = new AppsyncDomainNameResource(this, name+"-appsyncDomainName")
       appsyncDomainNameResource.addAppsyncDomainName(graphqlDirectAccessApiUrl, hostingStackAcmSSlCertArn, name)
@@ -36,13 +42,10 @@ export class blueGreenToggleStack extends TerraformStack {
       //add blueGreenToggle webhook endpoint for stripe
       new Route53Record(this, 'blueGreenWebhookDomainName', {zoneId: hostingStackZoneId, name: liveWebhookDomainName, type: "CNAME", ttl: 60, records: [currentLiveWebStack.webhookDomainName]})
       
-      //website hosted on s3
-      new S3Backend(this, {
-        bucket: backendStateS3BucketName,
-        key: name,
-        region: defaultRegion
-      })
-      cloudfront.newDistribution("blueGreenToggle", currentLiveWebStack.config.s3WebsiteDomainName,  hostingStackAcmSSlCertArn, currentLiveWebStack.s3WebsiteBucketDomain, hostingStackS3BucketDomainName, [domainApexName])
+     
+      
+       //website hosted on s3
+      cloudfront.newDistribution("blueGreenToggle",currentLiveWebStack.config.s3WebsiteDomainName+"."+currentLiveWebStack._s3WebsiteBucketDomain,  hostingStackAcmSSlCertArn, currentLiveWebStack.s3WebsiteBucketDomain, hostingStackS3BucketDomainName, [domainApexName])
       route53.addS3CloudfrontDomainRoute53Record( domainApexName, cloudfront.cloudfrontDistributions['blueGreenToggle'].domainName, hostingStackZoneId, cloudfront.cloudfrontDistributions['blueGreenToggle'].hostedZoneId)
     }
   }
