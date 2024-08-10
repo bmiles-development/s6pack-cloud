@@ -1,0 +1,157 @@
+{
+    "StartAt" : "GetTenant",
+    "States" : {
+      "GetTenant": {
+        "Type": "Task",
+        "Resource": "arn:aws:states:::dynamodb:getItem",
+        "Parameters": {
+          "TableName": "${dataStackName}-Tenants",
+          "Key": {
+            "Id": {
+              "S.$": "$.identity.claims.name"
+            }
+          }
+        },
+        "Next": "GetProcessorCustomer",
+        "ResultPath": "$.Tenant"
+      },
+      "GetProcessorCustomer" : {
+        "Type": "Task",
+        "Resource": "arn:aws:states:::lambda:invoke",
+        "Parameters": {
+          "FunctionName": "${stripeApiEntity}",
+          "Payload": {
+            "callback": "getCustomer",
+            "customerId.$": "$.Tenant.Item.ProcessorCustomerId.S"
+          }
+        },
+        "Retry": [
+          {
+            "ErrorEquals": [
+              "Lambda.ServiceException",
+              "Lambda.AWSLambdaException",
+              "Lambda.SdkClientException",
+              "Lambda.TooManyRequestsException"
+            ],
+            "IntervalSeconds": 1,
+            "MaxAttempts": 3,
+            "BackoffRate": 2
+          }
+        ],
+        "Next": "ListPaymentMethods",
+        "ResultPath": "$.customer"
+      },
+      "ListPaymentMethods": {
+        "Type": "Task",
+        "Resource": "arn:aws:states:::lambda:invoke",
+        "Parameters": {
+          "FunctionName": "${stripeApiEntity}",
+          "Payload": {
+            "callback": "listCustomerPaymentMethods",
+            "paymentMethodId.$": "$.arguments.paymentMethodId",
+            "customerId.$": "$.customer.Payload.id"
+          }
+        },
+        "Retry": [
+          {
+            "ErrorEquals": [
+              "Lambda.ServiceException",
+              "Lambda.AWSLambdaException",
+              "Lambda.SdkClientException",
+              "Lambda.TooManyRequestsException"
+            ],
+            "IntervalSeconds": 1,
+            "MaxAttempts": 3,
+            "BackoffRate": 2
+          }
+        ],
+        "Next": "CalculateTotalPaymentMethods",
+        "ResultPath": "$.paymentMethods"
+      },
+      "CalculateTotalPaymentMethods": {
+        "Type": "Pass",
+        "ResultPath": "$.totalPaymentMethods",
+        "Parameters": {
+          "TotalPaymentMethods.$": "States.ArrayLength($.paymentMethods.Payload.data)"
+        },
+        "Next": "CheckTotalPaymentMethods"
+      },
+      "CheckTotalPaymentMethods": {    
+        "Type": "Choice",
+        "Choices": [
+            {
+              "Variable": "$.totalPaymentMethods.TotalPaymentMethods",
+              "NumericLessThanEquals": 1,
+              "Next": "CheckIfSubscribedToPlan"
+            }
+        ],
+        "Default": "CheckIfDefaultPaymentMethod"
+      },
+      "CheckIfSubscribedToPlan" : {
+        "Type": "Choice",
+        "Choices": [
+            {
+              "Variable": "$.identity.claims.planId",
+              "StringEquals": "${freePlanDBKey}",
+              "Next": "DetachPaymentMethod"
+            }
+        ],
+        "Default": "FailOnlyPaymentMethodWhilePayingForPlan"
+      },
+      "FailOnlyPaymentMethodWhilePayingForPlan": {
+        "Type": "Fail",
+        "Error": "FailOnlyPaymentMethodWhilePayingForPlan",
+        "Cause": "Cannot delete only remaining payment method while still paying for a plan. Please cancel the plan before deleting the payment method."
+      },
+      "CheckIfDefaultPaymentMethod":{    
+        "Type": "Choice",
+        "Choices": 
+        [
+          {
+            "Variable": "$.customer.Payload.invoice_settings.default_payment_method",
+            "StringEqualsPath": "$.arguments.paymentMethodId",
+            "Next": "FailDefaultPaymentMethod"
+          }
+        ],
+        "Default": "DetachPaymentMethod"
+      },
+      "FailDefaultPaymentMethod": {
+        "Type": "Fail",
+        "Error": "FailDefaultPaymentMethod",
+        "Cause": "Cannot delete default payment method. Please select a different method as a payment method first."
+      },
+      "DetachPaymentMethod": {
+        "Type": "Task",
+        "Resource": "arn:aws:states:::lambda:invoke",
+        "Parameters": {
+          "FunctionName": "${stripeApiEntity}",
+          "Payload": {
+            "callback": "detachPaymentMethod",
+            "paymentMethodId.$": "$.arguments.paymentMethodId"
+          }
+        },
+        "Retry": [
+          {
+            "ErrorEquals": [
+              "Lambda.ServiceException",
+              "Lambda.AWSLambdaException",
+              "Lambda.SdkClientException",
+              "Lambda.TooManyRequestsException"
+            ],
+            "IntervalSeconds": 1,
+            "MaxAttempts": 3,
+            "BackoffRate": 2
+          }
+        ],
+        "Next": "PassDeletedPamentMethod",
+        "ResultPath": "$.detachPaymentMethod"
+      },
+      "PassDeletedPamentMethod" : {
+        "Type": "Pass",
+        "End": true,
+        "Parameters": {
+          "id.$": "$.arguments.paymentMethodId"
+        }
+      }
+    }
+  }

@@ -1,0 +1,16 @@
+{
+  "language": "typescript",
+  "app": "npx ts-node main.ts",
+  "sendCrashReports": "true",
+  "terraformProviders": [
+    "franckverrot/stripe@~>1.9.0",
+    "hashicorp/aws@5.61.0"
+  ],
+  "terraformModules": [],
+  "context": {
+    "@aws-cdk/aws-s3:serverAccessLogsUseBucketPolicy": true,
+    "excludeStackIdFromLogicalIds": "true",
+    "allowSepCharsInLogicalIds": "true"
+  },
+  "projectId": "fba9d02b-f76c-45ab-8eca-e3c4ccfbd2a7"
+}

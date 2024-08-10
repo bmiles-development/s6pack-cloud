@@ -1,0 +1,9 @@
+#if($util.isNull($context.identity.claims.name))
+    $utils.error("Must be logged in to subscribe.", "Custom.ErrorNotLoggedIn")
+#elseif($context.identity.claims.name != $context.arguments.id)
+    $utils.error("You can only subscribe to your own organization.", "Custom.ErrorIncorrectTenant")
+#else
+{
+        "version": "2018-05-29"
+}
+#end

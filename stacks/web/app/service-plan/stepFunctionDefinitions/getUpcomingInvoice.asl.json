@@ -1,0 +1,84 @@
+{
+    "StartAt": "GetTenant",
+    "States": {
+      "GetTenant": {
+        "Type": "Task",
+        "Resource": "arn:aws:states:::dynamodb:getItem",
+        "Parameters": {
+          "TableName": "${dataStackName}-Tenants",
+          "Key": {
+            "Id": {
+              "S.$": "$.identity.claims.name"
+            }
+          }
+        },
+        "Next": "GetTenantPlanFromPlanId",
+        "ResultPath": "$.tenant"
+      },
+      "GetTenantPlanFromPlanId": {
+        "Type": "Task",
+        "Resource": "arn:aws:states:::dynamodb:getItem",
+        "Parameters": {
+          "TableName": "${dataStackName}-PricePlans",
+          "Key": {
+            "Id": {
+              "S.$": "$.tenant.Item.PlanId.S"
+            }
+          }
+        },
+        "Next": "CheckIfCurrentPlanIsFree",
+        "ResultPath": "$.tenant.Plan"
+      },
+      "CheckIfCurrentPlanIsFree": {
+        "Comment": "If customer is downgrading to a free plan from a paid plan, then within Stripe the paid plan simply needs to be cancelled",
+        "Type": "Choice",
+        "Choices": [
+          {
+            "Variable": "$.tenant.Plan.Item.Id.S",
+            "StringEquals": "${freePlanDBKey}",
+            "Next": "FailCurrentPlanIsFree"
+          }
+        ],
+        "Default": "RetrieveUpcomingInvoice"
+      },
+      "FailCurrentPlanIsFree": {
+        "Type": "Fail",
+        "Error": "CurrentPlanIsFreePlan",
+        "Cause": "You currently do not have a payment plan."
+      },
+      "RetrieveUpcomingInvoice": {
+        "Type": "Task",
+        "Resource": "arn:aws:states:::lambda:invoke",
+        "ResultPath": "$.upcomingInvoice",
+        "Parameters": {
+          "FunctionName": "${stripeApiEntity}",
+          "Payload": {
+            "callback": "retrieveUpcomingInvoice",
+            "customerId.$": "$.tenant.Item.ProcessorCustomerId.S"
+          }
+        },
+        "Retry": [
+          {
+            "ErrorEquals": [
+              "Lambda.ServiceException",
+              "Lambda.AWSLambdaException",
+              "Lambda.SdkClientException",
+              "Lambda.TooManyRequestsException"
+            ],
+            "IntervalSeconds": 2,
+            "MaxAttempts": 6,
+            "BackoffRate": 2
+          }
+        ],
+        "Next": "FormatPlan"
+      },
+      "FormatPlan": {
+        "Type": "Pass",
+        "Parameters": {
+          "oldPlanTotal.$": "$.upcomingInvoice.Payload.total",
+          "nextInvoiceTimestamp.$": "$.upcomingInvoice.Payload.period_end"
+        },
+        "End": true
+      }
+    }  
+  }

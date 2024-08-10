@@ -1,0 +1,275 @@
+{
+    "StartAt": "GetTenant",
+    "States": {
+      "GetTenant": {
+        "Type": "Task",
+        "Resource": "arn:aws:states:::dynamodb:getItem",
+        "Parameters": {
+          "TableName": "${dataStackName}-Tenants",
+          "Key": {
+            "Id": {
+              "S.$": "$.identity.claims.name"
+            }
+          }
+        },
+        "Next": "GetProcessorCustomer",
+        "ResultPath": "$.GetTenant"
+      },
+      "GetProcessorCustomer": {
+        "Type": "Task",
+        "Resource": "arn:aws:states:::lambda:invoke",
+        "Parameters": {
+          "FunctionName": "${stripeApiEntity}",
+          "Payload": {
+            "callback": "getCustomer",
+            "customerId.$": "$.GetTenant.Item.ProcessorCustomerId.S"
+          }
+        },
+        "Retry": [
+          {
+            "ErrorEquals": [
+              "Lambda.ServiceException",
+              "Lambda.AWSLambdaException",
+              "Lambda.SdkClientException",
+              "Lambda.TooManyRequestsException"
+            ],
+            "IntervalSeconds": 1,
+            "MaxAttempts": 3,
+            "BackoffRate": 2
+          }
+        ],
+        "Next": "SearchForPaymentMethod",
+        "ResultPath": "$.getProcessorCustomer"
+      },
+      "SearchForPaymentMethod": {
+        "Type": "Task",
+        "Resource": "arn:aws:states:::lambda:invoke",
+        "Parameters": {
+          "FunctionName": "${stripeApiEntity}",
+          "Payload": {
+            "callback": "getPaymentMethod",
+            "paymentMethodId.$": "$.arguments.paymentMethodId",
+            "customerId.$": "$.GetTenant.Item.ProcessorCustomerId.S"
+          }
+        },
+        "Retry": [
+          {
+            "ErrorEquals": [
+              "Lambda.ServiceException",
+              "Lambda.AWSLambdaException",
+              "Lambda.SdkClientException",
+              "Lambda.TooManyRequestsException"
+            ],
+            "IntervalSeconds": 1,
+            "MaxAttempts": 3,
+            "BackoffRate": 2
+          }
+        ],
+        "Next": "SplitSetupIntentIdFromClientSecret",
+        "ResultPath": "$.foundPaymentMethod",
+        "Catch": [
+          {
+            "ErrorEquals": [
+              "States.TaskFailed"
+            ],
+            "Next": "CheckIfFoundPaymentMethod",
+            "ResultPath": "$.PaymentIdNotFound"
+          }
+        ]
+      },
+      "SplitSetupIntentIdFromClientSecret": {
+        "Type": "Pass",
+        "Next": "ExtractSetupIntentId",
+        "ResultPath" : "$.clientSecretSplit",
+        "Parameters" : {
+          "clientSecretSplit.$": "States.StringSplit($.arguments.setupIntentClientSecret, '_')"
+        }
+      },
+      "ExtractSetupIntentId": {
+        "Type": "Pass",
+        "Next": "ConfirmSetupIntent",
+        "ResultPath" : "$.setupIntentId",
+        "Parameters" : {
+          "setupIntentId.$": "States.ArrayGetItem($.clientSecretSplit.clientSecretSplit, 1)"
+        }
+      },
+      "ConfirmSetupIntent": {
+        "Type": "Task",
+        "Resource": "arn:aws:states:::lambda:invoke",
+        "Parameters": {
+          "FunctionName": "${stripeApiEntity}",
+          "Payload": {
+            "callback": "confirmSetupIntent",
+            "customerId.$": "$.GetTenant.Item.ProcessorCustomerId.S",
+            "paymentMethodId.$": "$.arguments.paymentMethodId",
+            "setupIntentId.$": "States.Format('seti_{}', $.setupIntentId.setupIntentId)"
+          }
+        },
+        "Retry": [
+          {
+            "ErrorEquals": [
+              "Lambda.ServiceException",
+              "Lambda.AWSLambdaException",
+              "Lambda.SdkClientException",
+              "Lambda.TooManyRequestsException"
+            ],
+            "IntervalSeconds": 1,
+            "MaxAttempts": 3,
+            "BackoffRate": 2
+          }
+        ],
+        "Next": "CheckIfFoundPaymentMethod",
+        "ResultPath": "$.confirmSetupIntent"
+      },
+      "CheckIfFoundPaymentMethod": {
+        "Type": "Choice",
+        "Choices": [
+          {
+            "Variable": "$.PaymentIdNotFound.Error",
+            "IsPresent": true,
+            "Next": "AttachPaymentMethod"
+          }
+        ],
+        "Default": "AddDefaultPaymentMethodFalse"
+      },
+      "AttachPaymentMethod": {
+        "Type": "Task",
+        "Resource": "arn:aws:states:::lambda:invoke",
+        "Parameters": {
+          "FunctionName": "${stripeApiEntity}",
+          "Payload": {
+            "callback": "attachPaymentMethod",
+            "paymentMethodId.$": "$.arguments.paymentMethodId",
+            "customerId.$": "$.GetTenant.Item.ProcessorCustomerId.S"
+          }
+        },
+        "Retry": [
+          {
+            "ErrorEquals": [
+              "Lambda.ServiceException",
+              "Lambda.AWSLambdaException",
+              "Lambda.SdkClientException",
+              "Lambda.TooManyRequestsException"
+            ],
+            "IntervalSeconds": 1,
+            "MaxAttempts": 3,
+            "BackoffRate": 2
+          }
+        ],
+        "Next": "AddDefaultPaymentMethodFalse",
+        "ResultPath": "$.AttachedPaymentMethod"
+      },
+      "AddDefaultPaymentMethodFalse": {
+        "Type": "Pass",
+        "Next": "CheckIfDefaultPaymentMethodIsSet",
+        "ResultPath" : "$.defaultPaymentMethod",
+        "Parameters" : false
+      },
+      "CheckIfDefaultPaymentMethodIsSet": {
+        "Type": "Choice",
+        "Choices": [
+          {
+            "Variable": "$.getProcessorCustomer.Payload.invoice_settings.default_payment_method",
+            "IsString": true,
+            "Next": "GetPaymentMethod"
+          }
+        ],
+        "Default": "UpdateProcessorCustomerDefaultPaymentMethod"
+      },
+      "UpdateProcessorCustomerDefaultPaymentMethod": {
+        "Type": "Task",
+        "Resource": "arn:aws:states:::lambda:invoke",
+        "Parameters": {
+          "FunctionName": "${stripeApiEntity}",
+          "Payload": {
+            "callback": "setDefaultCustomerPaymentMethod",
+            "customerId.$": "$.GetTenant.Item.ProcessorCustomerId.S",
+            "paymentMethodId.$": "$.arguments.paymentMethodId"
+          }
+        },
+        "Retry": [
+          {
+            "ErrorEquals": [
+              "Lambda.ServiceException",
+              "Lambda.AWSLambdaException",
+              "Lambda.SdkClientException",
+              "Lambda.TooManyRequestsException"
+            ],
+            "IntervalSeconds": 1,
+            "MaxAttempts": 3,
+            "BackoffRate": 2
+          }
+        ],
+        "Next": "AddDefaultPaymentMethodTrue",
+        "ResultPath": "$.updateProcessorCustomerDefaultPaymentMethod"
+      },
+      "AddDefaultPaymentMethodTrue": {
+        "Type": "Pass",
+        "Next": "GetPaymentMethod",
+        "ResultPath" : "$.defaultPaymentMethod",
+        "Parameters" : false
+      },
+      "GetPaymentMethod": {
+        "Type": "Task",
+        "Resource": "arn:aws:states:::lambda:invoke",
+        "Parameters": {
+          "FunctionName": "${stripeApiEntity}",
+          "Payload": {
+            "callback": "getPaymentMethod",
+            "customerId.$": "$.GetTenant.Item.ProcessorCustomerId.S",
+            "paymentMethodId.$": "$.arguments.paymentMethodId"
+          }
+        },
+        "Retry": [
+          {
+            "ErrorEquals": [
+              "Lambda.ServiceException",
+              "Lambda.AWSLambdaException",
+              "Lambda.SdkClientException",
+              "Lambda.TooManyRequestsException"
+            ],
+            "IntervalSeconds": 1,
+            "MaxAttempts": 3,
+            "BackoffRate": 2
+          }
+        ],
+        "Next": "CheckDefaultPaymentMethod",
+        "ResultPath": "$.newPaymentMethod"
+      },
+      "CheckDefaultPaymentMethod": {
+        "Type": "Choice",
+        "Choices": [
+          {
+            "Variable": "$.getProcessorCustomer.Payload.invoice_settings.default_payment_method",
+            "StringEqualsPath": "$.arguments.paymentMethodId",
+            "Next": "DefaultPaymentMethodTrue"
+          }
+        ],
+        "Default": "DefaultPaymentMethodFalse"
+      },
+      "DefaultPaymentMethodFalse": {
+        "Type": "Pass",
+        "Next": "SuccessNewPaymentMethod",
+        "Result": false,
+        "ResultPath": "$.defaultPaymentMethod"
+      },
+      "DefaultPaymentMethodTrue": {
+        "Type": "Pass",
+        "Next": "SuccessNewPaymentMethod",
+        "Result": true,
+        "ResultPath": "$.defaultPaymentMethod"
+      },
+      "SuccessNewPaymentMethod": {
+        "Type": "Pass",
+        "End" : true,
+        "Parameters": {
+          "id.$": "$.arguments.paymentMethodId",
+          "paymentType.$": "$.newPaymentMethod.Payload.type",
+          "expirationDate.$": "States.Format('{}/{}',$.newPaymentMethod.Payload.card.exp_month, $.newPaymentMethod.Payload.card.exp_year)",
+          "last4.$": "$.newPaymentMethod.Payload.card.last4",
+          "cardType.$": "$.newPaymentMethod.Payload.card.brand",
+          "default.$": "$.defaultPaymentMethod"
+        }
+      }
+    }
+  }

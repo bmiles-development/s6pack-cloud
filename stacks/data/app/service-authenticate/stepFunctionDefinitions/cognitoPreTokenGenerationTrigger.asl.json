@@ -1,0 +1,43 @@
+{
+    "StartAt": "GetTenant",
+    "States": {
+      "GetTenant": {
+        "Type": "Task",
+        "Resource": "arn:aws:states:::dynamodb:getItem",
+        "Parameters": {
+          "TableName": "${dataStackName}-Tenants",
+          "Key": {
+            "Id": {
+              "S.$": "$.tenantId"
+            }
+          }
+        },
+        "Next": "DynamoDBGetCurrentTenantPlanDetails",
+        "ResultPath": "$.Tenant"
+      },
+      "DynamoDBGetCurrentTenantPlanDetails": {
+        "Type": "Task",
+        "Resource": "arn:aws:states:::dynamodb:getItem",
+        "Parameters": {
+          "TableName": "${dataStackName}-PricePlans",
+          "Key": {
+            "Id": {
+              "S.$": "$.Tenant.Item.PlanId.S"
+            }
+          }
+        },
+        "Next": "PassToPreTokenGeneration",
+        "ResultPath": "$.PricePlan"
+      },
+      "PassToPreTokenGeneration": {
+        "Type": "Pass",
+        "End": true,
+        "Parameters": {
+          "Plan": {
+            "Id.$": "$.PricePlan.Item.Id.S",
+            "TotalUsers.$": "$.PricePlan.Item.TotalUsers.N"
+          }
+        }
+      }
+    }
+  }

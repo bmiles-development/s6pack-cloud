@@ -1,0 +1,21 @@
+#set( $myMap = {
+    "identity": $context.identity,
+    "arguments" : $context.arguments,
+    "stash" : $context.stash
+})
+$util.qr($util.log.info($util.toJson($myMap)))
+{
+    "version": "2018-05-29",
+    "method": "POST",
+    "resourcePath": "/",
+    "params": {
+        "headers": {
+            "content-type": "application/x-amz-json-1.0",
+            "x-amz-target":"AWSStepFunctions.StartSyncExecution"
+        },
+        "body": {
+            "stateMachineArn": "arn:aws:states:${region}:${accountId}:stateMachine:${stackName}-${stateMachineName}",
+            "input": "$${util.escapeJavaScript($util.toJson($myMap))}"
+        }
+    }
+}

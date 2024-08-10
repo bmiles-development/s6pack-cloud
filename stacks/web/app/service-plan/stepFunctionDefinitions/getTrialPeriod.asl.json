@@ -1,0 +1,59 @@
+
+{
+    "StartAt": "CheckTrialPeriodTimestamp",
+    "States": {
+        "CheckTrialPeriodTimestamp": {
+            "Type": "Choice",
+            "Choices": [
+            {
+                "Variable": "$.arguments.trialPeriodTimestamp",
+                "IsPresent": false,
+                "Next": "SetNull"
+            }
+            ],
+            "Default": "Lambda-TrialPeriodCalculation"
+        },
+        "SetNull": {
+            "Type": "Pass",
+            "Next": "Lambda-TrialPeriodCalculation",
+            "Parameters": {
+            "trialPeriodTimestamp": null
+            },
+            "ResultPath": "$.arguments"
+        },
+        "Lambda-TrialPeriodCalculation": {
+            "Type": "Task",
+            "Resource": "arn:aws:states:::lambda:invoke",
+            "ResultPath": "$.trialPeriod",
+            "Parameters": {
+            "Payload": {
+                "trialPeriodTimestamp.$": "$.arguments.trialPeriodTimestamp",
+                "trialPeriodDays": "${trialPeriodDays}"
+            },
+            "FunctionName": "${trialPeriodCalculationFunction}"
+            },
+            "Retry": [
+            {
+                "ErrorEquals": [
+                "Lambda.ServiceException",
+                "Lambda.AWSLambdaException",
+                "Lambda.SdkClientException",
+                "Lambda.TooManyRequestsException"
+                ],
+                "IntervalSeconds": 2,
+                "MaxAttempts": 6,
+                "BackoffRate": 2
+            }
+            ],
+            "Next": "PassToPreTokenGeneration"
+        },
+        "PassToPreTokenGeneration": {
+            "Type": "Pass",
+            "End": true,
+            "Parameters": {
+                "trialPeriodTimestamp.$": "$.trialPeriod.Payload.trialPeriodTimestamp",
+                "trialPeriodStatus.$": "$.trialPeriod.Payload.trialPeriodStatus"
+            }
+        }
+    }
+}

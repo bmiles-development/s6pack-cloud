@@ -1,0 +1,6 @@
+
+#if($util.isNull($context.result))
+    {"id": $util.toJson($context.arguments.id)}
+#else
+    $util.toJson($context.result)
+#end

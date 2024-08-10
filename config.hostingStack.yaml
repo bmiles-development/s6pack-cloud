@@ -1,0 +1,9 @@
+#the prefix used for SSM Parameter Store 
+parameterStorePrefix: /global/parameters/
+hostedZone: s6pack.build
+sesMailDomain: mail.s6pack.build
+graphqlApiUrl: api.s6pack.build
+testGraphQlEndpoint: https://apidev.s6pack.build/graphql
+defaultRegion: us-west-1
+logBucketNamePrefix: s6pack-build
+logRetentionPeriod: 90 #days

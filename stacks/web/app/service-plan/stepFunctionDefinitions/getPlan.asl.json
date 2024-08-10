@@ -1,0 +1,32 @@
+{
+    "StartAt": "DynamoDBGetPlan",
+      "States": {
+        "DynamoDBGetPlan": {
+          "Type": "Task",
+          "Resource": "arn:aws:states:::dynamodb:getItem",
+          "Parameters": {
+            "TableName": "${dataStackName}-PricePlans",
+            "Key": {
+              "Id": {
+                "S.$": "$.arguments.id"
+              }
+            }
+          },
+          "Next": "Pass"
+        },
+        "Pass": {
+          "Type": "Pass",
+          "End": true,
+          "Parameters": {
+            "statementDescriptor.$": "$.Item.StatementDescriptor.S",
+            "price.$": "$.Item.Price.N",
+            "title.$": "$.Item.Title.S",
+            "featureList.$": "$.Item.FeatureList.S",
+            "sortOrder.$": "$.Item.SortOrder.N",
+            "priceSet.$": "$.Item.PriceSet.S",
+            "id.$": "$.Item.Id.S",
+            "totalUsers.$": "$.Item.TotalUsers.N"
+          }
+        }
+    }
+  }

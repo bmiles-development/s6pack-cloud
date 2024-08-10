@@ -1,0 +1,280 @@
+schema {
+	# S5P Graphql
+	query: Query
+	mutation: Mutation
+	subscription: Subscription
+}
+
+type Mutation {
+	addAdminUser(username: AWSEmail!): User
+		@aws_cognito_user_pools(cognito_groups: ["Owner","Admin"])
+		# Adds an Admin User.
+	addStandardUser(username: AWSEmail!): User
+		@aws_cognito_user_pools(cognito_groups: ["Owner","Admin"])
+		# Adds a Standard User.
+	deleteAdminUser(id: String!): User
+		@aws_cognito_user_pools(cognito_groups: ["Owner","Admin"])
+		# Deletes an Admin User.
+	deleteStandardUser(id: String!): User
+		@aws_cognito_user_pools(cognito_groups: ["Owner","Admin"])
+		# Deletes a Standard User.
+	changeStandardUserToAdmin(id: String!): User
+		@aws_cognito_user_pools(cognito_groups: ["Owner","Admin"])
+		# Upgrades a Standard User to an Admin User.
+	changeAdminToStandardUser(id: String!): User
+		@aws_cognito_user_pools(cognito_groups: ["Owner","Admin"])
+		# Downgrades an Admin User to a Standard User.
+	activateUser(id: String!): User
+		@aws_cognito_user_pools(cognito_groups: ["Owner","Admin"])
+		# Activates a deactivated User.
+	deactivateUser(id: String!): User
+		@aws_cognito_user_pools(cognito_groups: ["Owner","Admin"])
+		# Deactivates an active User.
+	changePlan(planId: String!): Tenant
+		@aws_cognito_user_pools(cognito_groups: ["Owner"])
+		# Change a Paid Plan to another Paid Plan.
+	cancelPlanPeriodEndedWebhook(input: WebhookValidationInput!): Tenant
+		@aws_iam #iam policy used for lambda access from the webhook url endpoint
+		# Cancels a Paid Plan from stripe webhook and downgrades to the Free Plan. All additional active users will be deactivated.
+	cancelPaidPlanAtPeriodEnd: Tenant
+		@aws_cognito_user_pools(cognito_groups: ["Owner"])
+		# Cancels a Paid Plan at the billing period end. A webhook will fire for the payment processor to trigger cancelPaidPlan at the expected date.
+	reactivateCancelingPaidPlan: Tenant
+		@aws_cognito_user_pools(cognito_groups: ["Owner"])
+		# Reactivates a Paid Plan that is currently in the process of being canceled.
+	createPlanIntent(planId: String!): SetupIntent
+		@aws_cognito_user_pools(cognito_groups: ["Free","Owner"])
+		# Creates a SetupIntent for use with confirmAddPlan.
+	createPaymentMethodIntent: SetupIntent
+		@aws_cognito_user_pools(cognito_groups: ["Free","Owner"])
+		# Creates a SetupIntent for use with confirmAddPaymentMethod. 
+	confirmAddPlan(paymentMethodId: String!, planId: String!, setupIntentClientSecret: String!): Tenant
+		@aws_cognito_user_pools(cognito_groups: ["Free","Owner"])
+		# Adds a payment method to an account.
+	confirmAddPaymentMethod(paymentMethodId: String!, setupIntentClientSecret: String!): PaymentMethod
+		@aws_cognito_user_pools(cognito_groups: ["Free","Owner"])
+		# Adds an additional payment method to an account.
+	deleteAccount: SuccessResult
+		@aws_cognito_user_pools(cognito_groups: ["Free","Owner"])
+		# Deletes the entire Account, Users, Plan information, everything. Must first call the enableDeleteAccount mutation to unlock this action.
+	enableDeleteAccount: SuccessResult
+		@aws_cognito_user_pools(cognito_groups: ["Free","Owner"])
+		# Enables the deleteAccout mutation.
+	disableDeleteAccount: SuccessResult
+		@aws_cognito_user_pools(cognito_groups: ["Free","Owner"])
+		# Disables the deleteAccout mutation.
+	contactUs(input: ContactUsInput!): MessageResult #optional email for public form
+		@aws_iam @aws_cognito_user_pools(cognito_groups: ["Free","Owner","Admin","User"])
+		# Sends an email notification to the email designated at the "contactUsEmail..." parameters. See the config yaml files for reference. This has both authenticated access, as well as public access defined in the IAM policy.
+	deletePaymentMethod(paymentMethodId:String!): PaymentMethod
+		@aws_cognito_user_pools(cognito_groups: ["Free", "Owner"])
+		# Deletes a Payment Method
+	setDefaultPaymentMethod(paymentMethodId:String!): [PaymentMethod]
+		@aws_cognito_user_pools(cognito_groups: ["Free","Owner"])
+		# Sets a Payment Method as default
+}
+
+type Query {
+	listUsers: [User]
+		@aws_cognito_user_pools(cognito_groups: ["Owner","Admin","User"])
+		# List all users currently available in the account.
+	getUser(id: String!): User
+		@aws_cognito_user_pools(cognito_groups: ["Owner","Admin","User"])
+		# Get a specific account user's data.
+	getTenant: Tenant
+		@aws_cognito_user_pools(cognito_groups: ["Free","Owner","Admin","User"])
+		# Get tenant information and associated plan 
+	listPlans: [Plan]
+		@aws_iam @aws_cognito_user_pools(cognito_groups: ["Free","Owner","Admin","User"]) 
+		# List all Plans available. Has public access available as defined in the IAM policy.
+	getPlan(id: String!): Plan
+		@aws_cognito_user_pools(cognito_groups: ["Free","Owner","Admin","User"])
+		# Get the specific details of a Plan.
+	getTenantTrialPeriod: TenantTrialPeriod
+		@aws_cognito_user_pools(cognito_groups: ["Free","Owner","Admin","User"])
+		# Get the specific details of the Tenant's Trial Period calculated status and timestamp.
+	checkout(planId: String!): PreviewPlanChange
+		@aws_cognito_user_pools(cognito_groups: ["Owner"])
+		# Gets the payment and proration data between an account Owner's current Plan and another Paid Plan.
+	getUpcomingInvoice: PreviewPlanChange
+		@aws_cognito_user_pools(cognito_groups: ["Owner"])
+		# get upcoming invoice details, used primarily for preview before canceling Plan.
+	listCharges(input: ListChargesInput, limit: Int): [Charge]
+		@aws_cognito_user_pools(cognito_groups: ["Owner","Admin"])
+		# Gets the history of all payments and cancellations made.
+	listPaymentMethods: [PaymentMethod]
+		@aws_cognito_user_pools(cognito_groups: ["Free","Owner"])
+		# Lists current Owner's Payment Methods.
+	listInvoices: [Invoice]
+		@aws_cognito_user_pools(cognito_groups: ["Free","Owner"])
+		# Lists current Owner's Invoices.
+}
+
+type Subscription {
+	# GraphQL subscription that updates when a user's Payment Plan has successfully been updated and token claims need refreshing.
+	planModified(id: String!): Tenant
+		@aws_cognito_user_pools(cognito_groups: ["Free","Owner","Admin","User"])
+		@aws_subscribe(mutations: ["changePlan","confirmAddPlan"])
+	# GraphQL subscription that updates when a Payment Method has been been added.
+	paymentMethodAdded(tenantId: String!): PaymentMethod
+		@aws_cognito_user_pools(cognito_groups: ["Free","Owner"])
+		@aws_subscribe(mutations: ["confirmAddPaymentMethod"])
+	# GraphQL subscription that updates when a User has been been added.
+	userAdded(tenantId: String!): User
+		@aws_cognito_user_pools(cognito_groups: ["Free","Owner","Admin","User"])
+		@aws_subscribe(mutations: ["addAdminUser","addStandardUser"])
+	# GraphQL subscription that updates when a User has been been deleted.
+	userDeleted(tenantId: String!): User
+		@aws_cognito_user_pools(cognito_groups: ["Free","Owner","Admin","User"])
+		@aws_subscribe(mutations: ["deleteAdminUser","deleteStandardUser"])
+	# GraphQL subscription that updates when a Plan has been canceled.
+	planCanceled(id: String!): Tenant
+		@aws_cognito_user_pools(cognito_groups: ["Free","Owner","Admin","User"])
+		@aws_subscribe(mutations: ["cancelPlanPeriodEndedWebhook"])
+}
+
+input ContactUsInput @aws_iam @aws_cognito_user_pools(cognito_groups: ["Free","Owner","Admin","User"]) {
+  # Required inputs for the contactUs mutation.
+  subject: String!, 
+  message: String!, 
+  captchaToken: String!, 
+  email: AWSEmail!
+}
+
+input WebhookValidationInput {
+	# Required inputs for the cancelPlanPeriodEndedWebhook mutation which verifies the webhook payload signature.
+	tenantId: String!
+	headers: String!
+	body: String!
+}
+
+input ListChargesInput {
+	# Required inputs for the listCharges query.
+	perPage: Int
+	startingAfter: String
+	endingBefore: String
+}
+
+input PaymentMethodInput {
+	# Payment Processor Payment Method Details.
+	paymentType: String
+	expirationDate: String
+	last4: Int
+	cardType: String
+	default: Boolean
+}
+
+type PaymentMethod {
+	# Payment Processor Payment Method Details.
+	id: String
+	paymentType: String
+	expirationDate: String
+	last4: Int
+	cardType: String
+	default: Boolean
+}
+
+type PreviewPlanChange{
+	# Payment and proration data object retunred for the checkout query.
+	nextInviceSubTotal: Int
+	newPlanTotal: Int
+	oldPlanTotal: Int
+	newPlanTotalRemaining: Int
+	oldPlanTotalUnused: Int
+	nextInvoiceTimestamp: Int
+	previousInvoiceTimestamp: Int
+}
+
+type Charge {
+	# Data object returned from the listCharges query.
+	id: String
+	amount: Int
+	created: Int
+	paid: Boolean
+	paymentType: String
+	last4: String
+	refunded: Boolean
+	refundedAmount: Int
+	failureMessage: String
+}
+
+type Invoice {
+	id: String
+	planId: String
+	amountPaid: Int
+	amountDue: Int
+	amountRemaining: Int
+	description: String
+	periodStart: Int
+	periodEnd: Int
+    pdfUrl: String
+	number: String
+	startingBalance: Int,
+	planAmount: Int
+}
+
+type Plan @aws_iam @aws_cognito_user_pools(cognito_groups: ["Free","Owner","Admin","User"]) {
+	# Data object used in the listPlans and getPlanDetails query.
+	id: ID!
+	title: String
+	price: Int
+	priceSet: String
+	statementDescriptor: String
+	featureList: String
+	totalUsers: Int
+	cancelAtPeriodEnd: Boolean
+}
+
+type SetupIntent {
+	# Data object for use with the stripe.js frontend direct requests. PlanId Used with setupPlanIntent mutation.
+	planId: String,
+    clientSecret: String!
+}
+
+type Tenant @aws_iam @aws_cognito_user_pools(cognito_groups: ["Free","Owner","Admin","User"]) {
+	#Tenant object for Tenant details.
+	id: ID!
+	planId: ID
+	trialPeriodDays: Int
+	trialPeriodTimestamp: Int
+	plan: Plan
+	users: [User]
+	trialPeriod: TenantTrialPeriod
+	cancelPlanAt: Int
+}
+
+type TenantTrialPeriod @aws_iam @aws_cognito_user_pools(cognito_groups: ["Free","Owner","Admin","User"]) {
+	# Data object used for trial period status and caculated elegibility and time remaining data.
+	trialPeriodTimestamp: Int
+	trialPeriodStatus: String
+}
+
+type User @aws_cognito_user_pools(cognito_groups: ["Free","Owner","Admin","User"]) {
+	# Response object for User queries.
+	id: String
+	email: AWSEmail
+	enabled: Boolean
+	group: String
+	groupModfified: AWSDateTime #for Apollo client caching to work without reloading listUsers, need to return this field in addStandardUser and addAdminUser too
+	created: AWSDateTime
+	modified: AWSDateTime
+	status: String
+	tenant: Tenant
+  	tenantId: String
+}
+
+type Result {
+	# Generic response object for use with mutations.
+	userId: String
+}
+
+type MessageResult @aws_iam @aws_cognito_user_pools(cognito_groups: ["Free","Owner","Admin","User"]){
+	# Generic response object for use with mutations that require more information.
+	messageType: String!
+	message: String!
+}
+
+type SuccessResult {
+	# Generic success response object.
+	success: Boolean
+}

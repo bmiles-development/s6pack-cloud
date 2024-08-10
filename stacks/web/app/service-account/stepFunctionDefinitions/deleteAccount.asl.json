@@ -1,0 +1,221 @@
+{
+    "StartAt": "GetTenant",
+    "States": {
+      "GetTenant": {
+        "Type": "Task",
+        "Resource": "arn:aws:states:::dynamodb:getItem",
+        "Parameters": {
+          "TableName": "${dataStackName}-Tenants",
+          "Key": {
+            "Id": {
+              "S.$": "$.identity.claims.name"
+            }
+          }
+        },
+        "Next": "GetTenantPlanFromPlanId",
+        "ResultPath": "$.tenant"
+      },
+      "GetTenantPlanFromPlanId": {
+        "Type": "Task",
+        "Resource": "arn:aws:states:::dynamodb:getItem",
+        "Parameters": {
+          "TableName": "${dataStackName}-PricePlans",
+          "Key": {
+            "Id": {
+              "S.$": "$.tenant.Item.PlanId.S"
+            }
+          }
+        },
+        "Next": "CheckIfDeleteAccountFlagHasBeenSet",
+        "ResultPath": "$.tenant.Plan"
+      },
+      "CheckIfDeleteAccountFlagHasBeenSet": {
+        "Type": "Choice",
+        "Choices": [
+          {
+            "Not": {
+              "Variable": "$.tenant.Item.DeleteAccountFlag.BOOL",
+              "IsPresent": true
+            },
+            "Next": "FailDeleteAccountFlagNotSet"
+          }
+        ],
+        "Default": "ListTenantUsers"
+      },
+      "FailDeleteAccountFlagNotSet": {
+        "Type": "Fail",
+        "Error": "FailDeleteAccountFlagNotSet",
+        "Cause": "Need To Enable Deletion of the Account Before This Action Can Be Run"
+      },
+      "ListTenantUsers": {
+        "Type": "Pass",
+        "Next": "CognitoListUsers",
+        "ResultPath": "$.filter",
+        "Result": {
+          "template": "name = '{}'"
+        }
+      },
+      "CognitoListUsers": {
+        "Type": "Task",
+        "Next": "AddGroupMap",
+        "Parameters": {
+          "UserPoolId": "${cognitoEntity}",
+          "Filter.$": "States.Format($.filter.template, $.identity.claims.name)"
+        },
+        "Resource": "arn:aws:states:::aws-sdk:cognitoidentityprovider:listUsers",
+        "ResultPath": "$.CognitoListUsers"
+      },
+      "AddGroupMap": {
+        "Type": "Map",
+        "ItemsPath": "$.CognitoListUsers.Users",
+        "ResultPath": "$.Users",
+        "ItemProcessor": {
+          "ProcessorConfig": {
+            "Mode": "INLINE"
+          },
+          "StartAt": "AdminGetGroup",
+          "States": {
+            "AdminGetGroup": {
+              "Type": "Task",
+              "Parameters": {
+                "UserPoolId": "us-east-2_AwJnQGiC7",
+                "Username.$": "$.Username"
+              },
+              "Resource": "arn:aws:states:::aws-sdk:cognitoidentityprovider:adminListGroupsForUser",
+              "ResultPath": "$.Groups",
+              "Next": "UnNestGroup"
+            },
+            "UnNestGroup": {
+              "Type": "Pass",
+              "Next": "UnwindUserAttributes",
+              "Parameters": {
+                "Group.$": "$.Groups.Groups[0].GroupName",
+                "GroupModified.$": "$.Groups.Groups[0].LastModifiedDate"
+              },
+              "ResultPath": "$.currentGroup"
+            },
+            "UnwindUserAttributes": {
+              "Type": "Pass",
+              "Next": "Pass",
+              "Parameters": {
+                "Email.$": "$.Attributes[?(@.Name == email)].Value",
+                "Id.$": "$.Attributes[?(@.Name == sub)].Value"
+              },
+              "ResultPath": "$.AttributesUnwound"
+            },
+            "Pass": {
+              "Type": "Pass",
+              "End": true,
+              "Parameters": {
+                "email.$": "$.AttributesUnwound.Email[0]",
+                "id.$": "$.AttributesUnwound.Id[0]",
+                "group.$": "$.currentGroup.Group",
+                "groupModfified.$": "$.currentGroup.GroupModified",
+                "enabled.$": "$.Enabled",
+                "created.$": "$.UserCreateDate",
+                "modified.$": "$.UserLastModifiedDate",
+                "status.$": "$.UserStatus"
+              }
+            }
+          }
+        },
+        "Next": "DeleteTenantAndProcessorData"
+      },
+      "DeleteTenantAndProcessorData": {
+        "Type": "Task",
+        "Comment": "Get ProcessorCustomerId and pass to Payment Processor",
+        "Resource": "arn:aws:states:::dynamodb:deleteItem",
+        "Next": "CheckIfUserHasProcessorCustomerData",
+        "Parameters": {
+          "TableName": "${dataStackName}-Tenants",
+          "Key": {
+            "Id": {
+              "S.$": "$.identity.claims.name"
+            }
+          }
+        },
+        "ResultPath": "$.DeletedData"
+      },
+      "CheckIfUserHasProcessorCustomerData": {
+        "Type": "Choice",
+        "Choices": [
+          {
+            "Variable": "$.tenant.Item.ProcessorCustomerId.S",
+            "IsPresent": true,
+            "Next": "DeleteStripeCustomerData"
+          }
+        ],
+        "Default": "MapDeleteUser"
+      },
+      "DeleteStripeCustomerData": {
+        "Type": "Task",
+        "Resource": "arn:aws:states:::lambda:invoke",
+        "ResultPath": "$.DeleteStripeCustomerData",
+        "Parameters": {
+          "FunctionName": "${stripeApiEntity}",
+          "Payload": {
+            "callback": "deleteCustomer",
+            "customerId.$": "$.tenant.Item.ProcessorCustomerId.S"
+          }
+        },
+        "Retry": [
+          {
+            "ErrorEquals": [
+              "Lambda.ServiceException",
+              "Lambda.AWSLambdaException",
+              "Lambda.SdkClientException",
+              "Lambda.TooManyRequestsException"
+            ],
+            "IntervalSeconds": 2,
+            "MaxAttempts": 6,
+            "BackoffRate": 2
+          }
+        ],
+        "Next": "MapDeleteUser"
+      },
+      "MapDeleteUser": {
+        "Type": "Map",
+        "ItemsPath": "$.Users",
+        "ResultPath": "$.DeleteTenantAndProcessorData",
+        "Iterator": {
+          "StartAt": "AdminUserGlobalSignOut",
+          "States": {
+            "AdminUserGlobalSignOut": {
+              "Type": "Task",
+              "Next": "AdminDeleteUser",
+              "ResultPath": "$.AdminGlobalSignOut",
+              "Parameters": {
+                "UserPoolId": "${cognitoEntity}",
+                "Username.$": "$.id"
+              },
+              "Resource": "arn:aws:states:::aws-sdk:cognitoidentityprovider:adminUserGlobalSignOut"
+            },
+            "AdminDeleteUser": {
+              "Type": "Task",
+              "Next": "ReturnSuccess",
+              "Parameters": {
+                "UserPoolId": "${cognitoEntity}",
+                "Username.$": "$.id"
+              },
+              "Resource": "arn:aws:states:::aws-sdk:cognitoidentityprovider:adminDeleteUser"
+            },
+            "ReturnSuccess": {
+              "Type": "Pass",
+              "End": true,
+              "Parameters": {
+                "success": "true"
+              }
+            }
+          }
+        },
+        "Next" : "Success"
+      },
+      "Success": {
+        "Type": "Pass",
+        "End": true,
+        "Parameters": {
+          "success": "true"
+        }
+      }
+    }
+  }

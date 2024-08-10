@@ -1,0 +1,228 @@
+{
+    "StartAt": "ListUsersFilterTemplate",
+    "States": {
+      "ListUsersFilterTemplate": {
+        "Type": "Pass",
+        "Next": "ListUsers",
+        "ResultPath": "$.filter",
+        "Result": {
+          "template": "name='{}'"
+        }
+      }, 
+      "ListUsers": {
+        "Type": "Task",
+        "Next": "GetTenant",
+        "Parameters": {
+          "UserPoolId": "${cognitoEntity}",
+          "Filter.$": "States.Format($.filter.template, $.identity.claims.name)"
+        },
+        "Resource": "arn:aws:states:::aws-sdk:cognitoidentityprovider:listUsers",
+        "ResultPath": "$.Users"
+      },
+      "GetTenant": {
+        "Type": "Task",
+        "Resource": "arn:aws:states:::dynamodb:getItem",
+        "Parameters": {
+          "TableName": "${dataStackName}-Tenants",
+          "Key": {
+            "Id": {
+              "S.$": "$.identity.claims.name"
+            }
+          }
+        },
+        "Next": "GetTenantPlan",
+        "ResultPath": "$.tenant"
+      },
+      "GetTenantPlan": {
+        "Type": "Task",
+        "Resource": "arn:aws:states:::dynamodb:getItem",
+        "Parameters": {
+          "TableName": "${dataStackName}-PricePlans",
+          "Key": {
+            "Id": {
+              "S.$": "$.tenant.Item.PlanId.S"
+            }
+          }
+        },
+        "Next": "GetMaxAccountUsers",
+        "ResultPath": "$.tenantPlan"
+      },
+      "GetMaxAccountUsers": {
+        "Type": "Pass",
+        "Next": "FilterActiveUsers",
+        "Parameters": {
+          "N.$": "States.StringToJson($.tenantPlan.Item.TotalUsers.N)"
+        },
+        "ResultPath": "$.User.MaxUsers"
+      },
+      "FilterActiveUsers": {
+        "Type": "Pass",
+        "Next": "CountActiveUsers",
+        "ResultPath": "$.Users",
+        "InputPath": "$.Users.Users[?(@.Enabled == true)]"    
+      }, 
+      "CountActiveUsers": {
+        "Type": "Pass",
+        "Next": "CheckMaxActiveUsers",
+        "ResultPath": "$.currentActiveUsers",
+        "Parameters": {
+          "count.$": "States.ArrayLength($.Users)"
+        }    
+      },
+      "CheckMaxActiveUsers": {
+        "Type": "Choice",
+        "Choices": [
+          {
+            "Variable": "$.currentActiveUsers.count",
+            "NumericGreaterThanEqualsPath": "$.User.MaxUsers.N",
+            "Next": "PlanUserLimitReached"
+          }
+        ],
+        "Default": "VerifyTenantUser"
+      },
+      "PlanUserLimitReached": {
+        "Type": "Fail",
+        "Error": "PlanUserLimitReached",
+        "Cause": "You cannot activate anymore users under your current plan."
+      },
+      "VerifyTenantUser": {
+        "Type": "Task",
+        "Parameters": {
+          "UserPoolId": "${cognitoEntity}",
+          "Username.$": "$.arguments.id"
+        },
+        "Resource": "arn:aws:states:::aws-sdk:cognitoidentityprovider:adminGetUser",
+        "Next": "IsolateTenantId",
+        "ResultPath": "$.User",
+        "Catch": [
+          {
+            "ErrorEquals": [
+              "CognitoIdentityProvider.UserNotFoundException"
+            ],
+            "Next": "FailUserNotFound"
+          }
+        ]
+      },
+      "IsolateTenantId": {
+        "Type": "Pass",
+        "Next": "UnwindTenantId",
+        "Parameters": {
+          "User.$": "$.User",
+          "tenant_id.$": "$.User.UserAttributes[?(@.Name == name)].Value",
+          "matching_tenant_id.$": "$.identity.claims.name"
+        },
+        "ResultPath": "$.input"
+      },
+      "UnwindTenantId": {
+        "Type": "Pass",
+        "Next": "CheckUserTenantIdMatchesClient",
+        "Parameters": {
+          "User.$": "$.User",
+          "tenant_id.$": "$.input.tenant_id[0]",
+          "matching_tenant_id.$": "$.input.matching_tenant_id"
+        },
+        "ResultPath": "$.input"
+      },
+      "FailUserNotFound": {
+        "Type": "Fail",
+        "Error": "UsernameNotFound",
+        "Cause": "Username Not Found"
+      },
+      "CheckUserTenantIdMatchesClient": {
+        "Type": "Choice",
+        "Choices": [
+          {
+            "Variable": "$.input.matching_tenant_id",
+            "StringEqualsPath": "$.input.tenant_id",
+            "Next": "GetUserGroup"
+          }
+        ],
+        "Default": "FailUserNotFound"
+      },
+      "GetUserGroup": {
+        "Type": "Task",
+        "Parameters": {
+          "UserPoolId": "${cognitoEntity}",
+          "Username.$": "$.User.Username"
+        },
+        "Resource": "arn:aws:states:::aws-sdk:cognitoidentityprovider:adminListGroupsForUser",
+        "ResultPath": "$.Groups",
+        "Next": "UnNestGroup"
+      },
+      "UnNestGroup": {
+        "Type": "Pass",
+        "Next": "CatchUserNotFoundError",
+        "Parameters": {
+          "group.$": "$.Groups.Groups[0].GroupName",
+          "groupModified.$": "$.Groups.Groups[0].LastModifiedDate"
+        },
+        "ResultPath": "$.currentGroup"
+      },
+      "CatchUserNotFoundError": {
+        "Type": "Choice",
+        "Choices": [
+          {
+            "And": [
+              {
+                "Variable": "$.Error",
+                "IsPresent": true
+              },
+              {
+                "Variable": "$.Error",
+                "StringEquals": "UsernameNotFound"
+              }
+            ],
+            "Next": "UsernameNotFound"
+          }
+        ],
+        "Default": "AdminEnableUser"
+      },
+      "UsernameNotFound": {
+        "Type": "Fail",
+        "Error": "UsernameNotFound",
+        "Cause": "Username Not Found"
+      },
+      "AdminEnableUser": {
+        "Type": "Task",
+        "Next": "FilterIdJsonPathWorkaround",
+        "ResultPath" : "$.AdminEnableUser",
+        "Parameters": {
+          "UserPoolId": "${cognitoEntity}",
+          "Username.$": "$.User.Username"
+        },
+        "Resource": "arn:aws:states:::aws-sdk:cognitoidentityprovider:adminEnableUser",
+        "Catch": [
+          {
+            "ErrorEquals": [
+              "States.TaskFailed"
+            ],
+            "Comment": "Could Not Activate User.",
+            "Next": "FailActivateUser"
+          }
+        ]
+      },
+      "FailActivateUser": {
+        "Type": "Fail",
+        "Error": "FailActivateUser",
+        "Comment": "Could Not Enable User."
+      },
+      "FilterIdJsonPathWorkaround": {
+        "Type": "Pass",
+        "Next": "Success",
+        "ResultPath": "$.userFilter",
+        "Parameters": {
+          "id.$": "$.User.UserAttributes[?(@.Name==sub)].Value",
+          "enabled": true
+        }
+      },
+      "Success": {
+        "Type": "Pass",
+        "End": true,
+        "Parameters": {
+          "id.$": "$.userFilter.id[0]",
+          "enabled.$": "$.userFilter.enabled",
+          "tenantId.$" : "$.input.tenant_id"
+        }
+      }
+    }
+  }

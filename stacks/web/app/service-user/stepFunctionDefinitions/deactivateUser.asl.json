@@ -1,0 +1,168 @@
+{
+    "StartAt": "VerifyTenantUser",
+    "States": {
+      "VerifyTenantUser": {
+        "Type": "Task",
+        "Parameters": {
+          "UserPoolId": "${cognitoEntity}",
+          "Username.$": "$.arguments.id"
+        },
+        "Resource": "arn:aws:states:::aws-sdk:cognitoidentityprovider:adminGetUser",
+        "Next": "IsolateTenantId",
+        "ResultPath": "$.User",
+        "Catch": [
+          {
+            "ErrorEquals": [
+              "CognitoIdentityProvider.UserNotFoundException"
+            ],
+            "Next": "FailUserNotFound"
+          }
+        ]
+      },
+      "IsolateTenantId": {
+        "Type": "Pass",
+        "Next": "UnwindTenantId",
+        "Parameters": {
+          "User.$": "$.User",
+          "tenant_id.$": "$.User.UserAttributes[?(@.Name == name)].Value",
+          "matching_tenant_id.$": "$.identity.claims.name"
+        },
+        "ResultPath": "$.input"
+      },
+      "UnwindTenantId": {
+        "Type": "Pass",
+        "Next": "CheckUserTenantIdMatchesClient",
+        "Parameters": {
+          "User.$": "$.User",
+          "tenant_id.$": "$.input.tenant_id[0]",
+          "matching_tenant_id.$": "$.input.matching_tenant_id"
+        },
+        "ResultPath": "$.input"
+      },
+      "FailUserNotFound": {
+        "Type": "Fail",
+        "Error": "UsernameNotFound",
+        "Cause": "Username Not Found"
+      },
+      "CheckUserTenantIdMatchesClient": {
+        "Type": "Choice",
+        "Choices": [
+          {
+            "Variable": "$.input.matching_tenant_id",
+            "StringEqualsPath": "$.input.tenant_id",
+            "Next": "CatchUserNotFoundError"
+          }
+        ],
+        "Default": "FailUserNotFound"
+      },
+      "CatchUserNotFoundError": {
+        "Type": "Choice",
+        "Choices": [
+          {
+            "And": [
+              {
+                "Variable": "$.Error",
+                "IsPresent": true
+              },
+              {
+                "Variable": "$.Error",
+                "StringEquals": "UsernameNotFound"
+              }
+            ],
+            "Next": "UsernameNotFound"
+          }
+        ],
+        "Default": "AdminListGroupsForUser"
+      },
+      "UsernameNotFound": {
+        "Type": "Fail",
+        "Error": "UsernameNotFound",
+        "Cause": "Username Not Found"
+      }, 
+      "AdminListGroupsForUser": {
+        "Type": "Task",
+        "Parameters": {
+          "UserPoolId": "${cognitoEntity}",
+          "Username.$": "$.User.Username"
+        },
+        "Resource": "arn:aws:states:::aws-sdk:cognitoidentityprovider:adminListGroupsForUser",
+        "ResultPath" : "$.userGroups",
+        "Next": "GetUserGroup"
+      },
+      "GetUserGroup": {
+        "Type": "Task",
+        "Parameters": {
+          "UserPoolId": "${cognitoEntity}",
+          "Username.$": "$.User.Username"
+        },
+        "Resource": "arn:aws:states:::aws-sdk:cognitoidentityprovider:adminListGroupsForUser",
+        "ResultPath": "$.Groups",
+        "Next": "IsOwner"
+      },
+      "IsOwner": {
+        "Type": "Pass",
+        "Next": "CheckIfUserIsOwner",
+        "Parameters": {
+          "group.$": "$.Groups.Groups[?(@.GroupName==Owner)]"
+        },
+        "ResultPath": "$.IsOwner"
+      },
+      "CheckIfUserIsOwner": {
+        "Type": "Choice",
+        "Choices": [
+          {
+            "Variable": "$.IsOwner.group[0].GroupName",
+            "IsPresent": true,
+            "Next": "Fail - CannotDeactivateOwner"
+          }
+        ],
+        "Default": "AdminDisableUser"
+      },
+      "Fail - CannotDeactivateOwner": {
+        "Type": "Fail",
+        "Error": "CannotDeactivateOwner"
+      },
+      "AdminDisableUser": {
+        "Type": "Task",
+        "Next": "FilterIdJsonPathWorkaround",
+        "ResultPath" : "$.AdminDisableUser",
+        "Parameters": {
+          "UserPoolId": "${cognitoEntity}",
+          "Username.$": "$.User.Username"
+        },
+        "Resource": "arn:aws:states:::aws-sdk:cognitoidentityprovider:adminDisableUser",
+        "Catch": [
+          {
+            "ErrorEquals": [
+              "States.TaskFailed"
+            ],
+            "Comment": "Could Not Deactivate User.",
+            "Next": "FailDeactivateUser"
+          }
+        ]
+      },
+      "FailDeactivateUser": {
+        "Type": "Fail",
+        "Error": "FailDeactivateUser",
+        "Comment": "Could Not Disable User."
+      },
+      "FilterIdJsonPathWorkaround": {
+        "Type": "Pass",
+        "Next": "Success",
+        "ResultPath": "$.userFilter",
+        "Parameters": {
+          "id.$": "$.User.UserAttributes[?(@.Name==sub)].Value",
+          "enabled": false
+        }
+      },
+      "Success": {
+        "Type": "Pass",
+        "End": true,
+        "Parameters": {
+          "id.$": "$.userFilter.id[0]",
+          "enabled.$": "$.userFilter.enabled",
+          "tenantId.$" : "$.input.tenant_id"
+        }
+      }
+    }
+  }

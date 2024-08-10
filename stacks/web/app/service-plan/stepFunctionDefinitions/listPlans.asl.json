@@ -1,0 +1,50 @@
+{
+    "StartAt": "DynamoDBGetPlans",
+    "States": {
+      "DynamoDBGetPlans": {
+        "Type": "Task",
+        "Next": "Map",
+        "Resource": "arn:aws:states:::aws-sdk:dynamodb:query",
+        "Parameters": {
+          "ExpressionAttributeValues": {
+            ":s": {"S": "default"},
+            ":e": {"N": "0"}
+          },
+          "IndexName": "PriceSetIndex",
+          "KeyConditionExpression": "PriceSet = :s AND SortOrder > :e",
+          "ScanIndexForward": true,
+          "TableName": "${dataStackName}-PricePlans"
+       },
+       "ResultPath": "$.Payload"
+    },
+     "Map": {
+        "Type": "Map",
+        "ItemsPath": "$.Payload.Items",
+        "ItemProcessor": {
+          "ProcessorConfig": {
+            "Mode": "INLINE"
+          },
+          "StartAt": "Pass",
+          "States": {
+            "Pass": {
+              "Type": "Pass",
+              "End": true,
+              "Parameters": {
+                "data" : {
+                  "id.$": "$.Id.S",
+                  "title.$": "$.Title.S",
+                  "price.$": "$.Price.N",
+                  "priceSet.$": "$.PriceSet.S",
+                  "statementDescriptor.$": "$.StatementDescriptor.S",
+                  "featureList.$": "$.FeatureList.S",
+                  "totalUsers.$": "$.TotalUsers.N"
+                }
+              },
+              "OutputPath": "$.data"
+            }
+          }
+        },
+        "End": true
+      }
+    }
+  }

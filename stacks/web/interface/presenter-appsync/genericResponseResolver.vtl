@@ -1,0 +1,17 @@
+#if($ctx.error)
+    $util.error($ctx.error.message, $ctx.error)
+#end
+## if the response status code is not 200, then return an error. Else return the body **
+#if($ctx.result.statusCode == 200)
+    #if($util.parseJson($ctx.result.body)["error"])
+        ## appsync throws 200 even in an error so catch the message passed by the Fail stepfunction
+        $util.error($util.parseJson($ctx.result.body)["cause"], $util.parseJson($ctx.result.body)["error"])
+    #else
+        ## If response is 200, return the body.
+        $util.parseJson($ctx.result.body)["output"]
+    #end
+#else
+    ## If response is not 200, append the response to error block.
+    ##$util.appendError($ctx.result.body, $ctx.result.statusCode)
+    $util.parseJson($ctx.result.body)
+#end

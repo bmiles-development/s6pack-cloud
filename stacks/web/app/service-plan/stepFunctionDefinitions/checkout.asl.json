@@ -1,0 +1,230 @@
+{
+      "StartAt": "GetTenant",
+      "States": {
+        "GetTenant": {
+          "Type": "Task",
+          "Resource": "arn:aws:states:::dynamodb:getItem",
+          "Parameters": {
+            "TableName": "${dataStackName}-Tenants",
+            "Key": {
+              "Id": {
+                "S.$": "$.identity.claims.name"
+              }
+            }
+          },
+          "Next": "GetTenantPlanFromPlanId",
+          "ResultPath": "$.tenant"
+        },
+        "GetTenantPlanFromPlanId": {
+          "Type": "Task",
+          "Resource": "arn:aws:states:::dynamodb:getItem",
+          "Parameters": {
+            "TableName": "${dataStackName}-PricePlans",
+            "Key": {
+              "Id": {
+                "S.$": "$.tenant.Item.PlanId.S"
+              }
+            }
+          },
+          "Next": "VerifyTenantNewPlan",
+          "ResultPath": "$.tenant.Plan"
+        },
+        "VerifyTenantNewPlan": {
+          "Type": "Task",
+          "Resource": "arn:aws:states:::dynamodb:getItem",
+          "Parameters": {
+            "TableName": "${dataStackName}-PricePlans",
+            "Key": {
+              "Id": {
+                "S.$": "$.arguments.planId"
+              }
+            }
+          },
+          "Next": "CheckNewPlanDetailsWereFound",
+          "ResultPath": "$.tenantNewPlanDetails"
+        },
+        "CheckNewPlanDetailsWereFound": {
+          "Type": "Choice",
+          "Choices": [
+            {
+              "Not": {
+                "Variable": "$.tenantNewPlanDetails.Item.ProcessorPlanId.S",
+                "IsPresent": true
+              },
+              "Next": "Fail-PlanIdDoesNotExist"
+            }
+          ],
+          "Default": "CheckIfEitherPlanIsFree"
+        },
+        "Fail-PlanIdDoesNotExist": {
+          "Type": "Fail",
+          "Error": "PlanIdDoesNotExist",
+          "Cause": "Incorrect PlanId entered."
+        },
+        "CheckIfEitherPlanIsFree": {
+          "Comment": "If customer is downgrading to a free plan from a paid plan, then within Stripe the paid plan simply needs to be cancelled",
+          "Type": "Choice",
+          "Choices": [
+            {
+              "Variable": "$.tenantNewPlanDetails.Item.Id.S",
+              "StringEquals": "${freePlanDBKey}",
+              "Next": "FailNewPlanIsFree"
+            },
+            {
+              "Variable": "$.tenant.Plan.Item.Id.S",
+              "StringEquals": "${freePlanDBKey}",
+              "Next": "FailCurrentPlanIsFree"
+            }
+          ],
+          "Default": "StripeGetActiveSubscription"
+        },
+        "FailCurrentPlanIsFree": {
+          "Type": "Fail",
+          "Error": "CurrentPlanIsFreePlan",
+          "Cause": "Use createPlanIntent mutation if current plan is free."
+        },
+        "FailNewPlanIsFree": {
+          "Type": "Fail",
+          "Error": "NewPlanIsFreePlan",
+          "Cause": "Must use changePlan mutation or cancelPlan mutation if downgrading to free plan."
+        },
+        "StripeGetActiveSubscription": {
+          "Comment": "Get Customer Active Subscription object from Stripe",
+          "Type": "Task",
+          "Resource": "arn:aws:states:::lambda:invoke",
+          "ResultPath": "$.processorSubscriptionData",
+          "Parameters": {
+            "FunctionName": "${stripeApiEntity}",
+            "Payload": {
+              "callback": "getActiveCustomerSubscription",
+              "customerId.$": "$.tenant.Item.ProcessorCustomerId.S"
+            }
+          },
+          "Retry": [
+            {
+              "ErrorEquals": [
+                "Lambda.ServiceException",
+                "Lambda.AWSLambdaException",
+                "Lambda.SdkClientException",
+                "Lambda.TooManyRequestsException"
+              ],
+              "IntervalSeconds": 2,
+              "MaxAttempts": 6,
+              "BackoffRate": 2
+            }
+          ],
+          "Next": "CheckIfStripeSubscriptionExists"
+        },
+        "CheckIfStripeSubscriptionExists": {
+          "Type": "Choice",
+          "Choices": [
+            {
+              "Not": {
+                "Variable": "$.processorSubscriptionData.Payload.data[0].id",
+                "IsPresent": true
+              },
+              "Next": "FailStripeSubscriptionNotFound"
+            }
+          ],
+          "Default": "GetPriceFromPlanId"
+        },
+        "FailStripeSubscriptionNotFound": {
+          "Type": "Fail",
+          "Error": "SubscriptionNotFound",
+          "Cause": "Subscription Not Found - Incorrect PlanId"
+        },
+        "GetPriceFromPlanId": {
+          "Comment": "Get Plan Price object from Stripe",
+          "Type": "Task",
+          "Resource": "arn:aws:states:::lambda:invoke",
+          "ResultPath": "$.getPriceFromPlanId",
+          "Parameters": {
+            "FunctionName": "${stripeApiEntity}",
+            "Payload": {
+              "callback": "getPriceFromProductId",
+              "productId.$": "$.tenantNewPlanDetails.Item.ProcessorPlanId.S"
+            }
+          },
+          "Retry": [
+            {
+              "ErrorEquals": [
+                "Lambda.ServiceException",
+                "Lambda.AWSLambdaException",
+                "Lambda.SdkClientException",
+                "Lambda.TooManyRequestsException"
+              ],
+              "IntervalSeconds": 2,
+              "MaxAttempts": 6,
+              "BackoffRate": 2
+            }
+          ],
+          "Next": "PreviewPaidSubscriptionChange"
+        },
+        "PreviewPaidSubscriptionChange": {
+          "Type": "Task",
+          "Resource": "arn:aws:states:::lambda:invoke",
+          "ResultPath": "$.previewPlanChangeData",
+          "Parameters": {
+            "FunctionName": "${stripeApiEntity}",
+            "Payload": {
+              "callback": "previewPlanChange",
+              "customerId.$": "$.tenant.Item.ProcessorCustomerId.S",
+              "planId.$":"$.processorSubscriptionData.Payload.data[0].id",
+              "subscriptionItemId.$": "$.processorSubscriptionData.Payload.data[0].items.data[0].id",
+              "newPriceId.$": "$.getPriceFromPlanId.Payload.data[0].id"
+            }
+          },
+          "Retry": [
+            {
+              "ErrorEquals": [
+                "Lambda.ServiceException",
+                "Lambda.AWSLambdaException",
+                "Lambda.SdkClientException",
+                "Lambda.TooManyRequestsException"
+              ],
+              "IntervalSeconds": 2,
+              "MaxAttempts": 6,
+              "BackoffRate": 2
+            }
+          ],
+          "Next": "CheckIfCurrentlyTrialingPlan"
+        },
+        "CheckIfCurrentlyTrialingPlan": {
+          "Type": "Choice",
+          "Choices": [
+            {
+              "Variable": "$.previewPlanChangeData.Payload.lines.data[1]",
+              "IsPresent": true,
+              "Next": "FormatForNonTrialingPlan"
+            }
+          ],
+          "Default": "FormatForTrialingPlan"
+        },
+        "FormatForTrialingPlan": {
+          "Type": "Pass",
+          "Parameters": {
+            "nextInviceSubTotal.$": "$.previewPlanChangeData.Payload.subtotal",
+            "newPlanTotal.$": "$.previewPlanChangeData.Payload.lines.data[0].plan.amount",
+            "oldPlanTotal": 0,
+            "newPlanTotalRemaining.$": "$.previewPlanChangeData.Payload.lines.data[0].amount_excluding_tax",
+            "oldPlanTotalUnused": 0,
+            "previousInvoiceTimestamp.$": "$.previewPlanChangeData.Payload.period_start",
+            "nextInvoiceTimestamp.$": "$.previewPlanChangeData.Payload.period_end"
+          },
+          "End": true
+        },
+        "FormatForNonTrialingPlan": {
+          "Type": "Pass",
+          "Parameters": {
+            "nextInviceSubTotal.$": "$.previewPlanChangeData.Payload.subtotal",
+            "newPlanTotal.$": "$.previewPlanChangeData.Payload.lines.data[1].plan.amount",
+            "oldPlanTotal.$": "$.previewPlanChangeData.Payload.lines.data[0].plan.amount",
+            "newPlanTotalRemaining.$": "$.previewPlanChangeData.Payload.lines.data[1].amount_excluding_tax",
+            "oldPlanTotalUnused.$": "$.previewPlanChangeData.Payload.lines.data[0].amount_excluding_tax",
+            "previousInvoiceTimestamp.$": "$.previewPlanChangeData.Payload.period_start",
+            "nextInvoiceTimestamp.$": "$.previewPlanChangeData.Payload.period_end"
+          },
+          "End": true
+        }
+      }  
+    }

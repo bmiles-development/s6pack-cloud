@@ -1,0 +1,196 @@
+{ 
+    "StartAt": "GetTenant",
+    "States": {
+      "GetTenant": {
+        "Type": "Task",
+        "Resource": "arn:aws:states:::dynamodb:getItem",
+        "Parameters": {
+          "TableName": "${dataStackName}-Tenants",
+          "Key": {
+            "Id": {
+              "S.$": "$.identity.claims.name"
+            }
+          }
+        },
+        "Next": "CheckIfCancelPlanAtExists",
+        "ResultPath": "$.GetTenant"
+      },
+      "CheckIfCancelPlanAtExists": {
+        "Type": "Choice",
+        "Choices": [
+          {
+            "Variable": "$.GetTenant.Item.CancelPlanAt.N",
+            "IsPresent": true,
+            "Next": "CheckCancelPlanAtDeadlinePassed"
+          }
+        ],
+        "Default": "FailPlanNotInCancelingState"
+      },
+      "FailPlanNotInCancelingState": {
+        "Type": "Fail",
+        "Error": "FailPlanNotInCancelingState"
+      },
+      "CheckCancelPlanAtDeadlinePassed": {
+        "Type": "Task",
+        "Resource": "arn:aws:states:::lambda:invoke",
+        "Parameters": {
+          "Payload": {
+            "timestamp.$": "$.GetTenant.Item.CancelPlanAt.N"
+          },
+          "FunctionName": "${checkCancelDeadlinePassedFunction}"
+        },
+        "Retry": [
+          {
+            "ErrorEquals": [
+              "Lambda.ServiceException",
+              "Lambda.AWSLambdaException",
+              "Lambda.SdkClientException",
+              "Lambda.TooManyRequestsException"
+            ],
+            "IntervalSeconds": 1,
+            "MaxAttempts": 3,
+            "BackoffRate": 2
+          }
+        ],
+        "Next": "CheckIfCancelPlanAtDeadlinePassedResult",
+        "ResultPath": "$.CancelAtDeadlinePassed"
+      },
+      "CheckIfCancelPlanAtDeadlinePassedResult": {
+        "Type": "Choice",
+        "Choices": [
+          {
+            "Variable": "$.CancelAtDeadlinePassed.Payload",
+            "BooleanEquals": true,
+            "Next": "CannotReactivateAfterCancelPlanAtDeadlinePassed"
+          }
+        ],
+        "Default": "GetProcessorSubscription"
+      },
+      "CannotReactivateAfterCancelPlanAtDeadlinePassed":{
+        "Type": "Fail",
+        "Error": "CannotReactivateAfterCancelPlanAtDeadlinePassed"
+      },
+      "GetProcessorSubscription": {
+        "Type": "Task",
+        "Resource": "arn:aws:states:::lambda:invoke",
+        "Parameters": {
+          "Payload": {
+            "callback": "querySubscriptionByMetadataPlanIdAndTenantId",
+            "planId.$": "$.GetTenant.Item.PlanId.S",
+            "tenantId.$": "$.identity.claims.name"
+          },
+          "FunctionName": "${stripeApiEntity}"
+        },
+        "Retry": [
+          {
+            "ErrorEquals": [
+              "Lambda.ServiceException",
+              "Lambda.AWSLambdaException",
+              "Lambda.SdkClientException",
+              "Lambda.TooManyRequestsException"
+            ],
+            "IntervalSeconds": 1,
+            "MaxAttempts": 3,
+            "BackoffRate": 2
+          }
+        ],
+        "Next": "GetSubscription",
+        "ResultPath": "$.GetProcessorSubscription"
+      },
+      "GetSubscription": {
+        "Type": "Task",
+        "Comment": "Get Current Processor Subscription",
+        "Resource": "arn:aws:states:::lambda:invoke",
+        "Parameters": {
+          "FunctionName": "${stripeApiEntity}",
+          "Payload": {
+            "callback": "getCustomerSubscription",
+            "customerId.$": "$.GetTenant.Item.ProcessorCustomerId.S"
+          }
+        },
+        "Retry": [
+          {
+            "ErrorEquals": [
+              "Lambda.ServiceException",
+              "Lambda.AWSLambdaException",
+              "Lambda.SdkClientException",
+              "Lambda.TooManyRequestsException"
+            ],
+            "IntervalSeconds": 1,
+            "MaxAttempts": 3,
+            "BackoffRate": 2
+          }
+        ],
+        "Next": "ParseJsonPaths",
+        "ResultPath": "$.GetCurrentProcessorSubscription"
+      },
+      "ParseJsonPaths": {
+        "Type": "Pass",
+        "Next": "ReactivateCancelingPaidPlan",
+        "ResultPath": "$.SubscriptionData",
+        "Parameters": {
+          "subscriptionId.$": "$.GetCurrentProcessorSubscription.Payload.data[?(@.status==trialing || @.status==active)].id",
+          "subscriptionItemId.$": "$.GetCurrentProcessorSubscription.Payload.data[?(@.status==trialing || @.status==active)].items.data[0].id"
+        }
+      },
+      "ReactivateCancelingPaidPlan": {
+        "Type": "Task",
+        "Resource": "arn:aws:states:::lambda:invoke",
+        "ResultPath": "$.CancelPaidPlanData",
+        "Parameters": {
+          "Payload": {
+            "callback": "reactivateCancellingSubscription",
+            "customerId.$": "$.GetTenant.Item.ProcessorCustomerId.S",
+            "currentSubscriptionId.$": "$.SubscriptionData.subscriptionId[0]"
+          },
+          "FunctionName": "${stripeApiEntity}"
+        },
+        "Retry": [
+          {
+            "ErrorEquals": [
+              "Lambda.ServiceException",
+              "Lambda.AWSLambdaException",
+              "Lambda.SdkClientException",
+              "Lambda.TooManyRequestsException"
+            ],
+            "IntervalSeconds": 2,
+            "MaxAttempts": 6,
+            "BackoffRate": 2
+          }
+        ],
+        "Catch": [
+          {
+            "ErrorEquals": [
+              "States.TaskFailed"
+            ],
+            "Next": "FailPlanNotInCancelingState"
+          }
+        ],
+        "Next": "UpdateTenant"
+      },
+      "UpdateTenant": {
+        "Type": "Task",
+        "Resource": "arn:aws:states:::dynamodb:updateItem",
+        "ResultPath": "$.UpdateTenant",
+        "Parameters": {
+          "TableName": "${dataStackName}-Tenants",
+          "Key": {
+            "Id": {
+              "S.$": "$.identity.claims.name"
+            }
+          },
+          "UpdateExpression": "REMOVE CancelPlanAt"
+        },
+        "Next": "Pass"
+      },
+      "Pass": {
+        "Type": "Pass",
+        "End": true,
+        "InputPath": "$",
+        "Parameters": {
+            "id.$" : "$.identity.claims.name"
+        },
+        "ResultPath": "$"
+      }
+    }
+  }
