@@ -3,6 +3,7 @@ import {SesDomainIdentity} from '@cdktf/provider-aws/lib/ses-domain-identity'
 import {SesIdentityPolicy} from '@cdktf/provider-aws/lib/ses-identity-policy'
 import {SesDomainDkim} from '@cdktf/provider-aws/lib/ses-domain-dkim'
 import {SesDomainMailFrom} from '@cdktf/provider-aws/lib/ses-domain-mail-from'
+import { SesEmailIdentity } from '@cdktf/provider-aws/lib/ses-email-identity';
   
   export class Ses extends Construct {
     private _domainIdentity : any
@@ -29,9 +30,11 @@ import {SesDomainMailFrom} from '@cdktf/provider-aws/lib/ses-domain-mail-from'
     constructor(scope: Construct, name: string, globalConfig:any, sesIdentityPolicy:string) {
         super(scope, name);
 
+        //SES domain identity
         this._domainIdentity = new SesDomainIdentity(this, "domainIdentity", {
             domain: globalConfig.hostedZone
         })
+
 
         new SesIdentityPolicy(this, "identityPolicy", {
           name: "identity_policy",
@@ -47,6 +50,21 @@ import {SesDomainMailFrom} from '@cdktf/provider-aws/lib/ses-domain-mail-from'
           domain: globalConfig.hostedZone,
           mailFromDomain: globalConfig.sesMailDomain 
         })
+
+        const emailIdentity = new SesEmailIdentity(this, "emailIdentity", {
+          email: globalConfig.sesEmailIdentityAddress,
+        });
+        
+        //SES domain mail from
+        new SesDomainMailFrom(
+          this,
+          "emailIdentityDomainFrom",
+          {
+            domain: emailIdentity.email,
+            mailFromDomain: globalConfig.sesEmailIdentityDomain,
+          }
+        ); 
+
 
         this._verificationToken = this._domainIdentity.verificationToken
 
