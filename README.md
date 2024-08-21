@@ -48,9 +48,6 @@ Full deployment time will take roughly an hour with manual steps between (requir
     ```
     /global/parameters/testPassword = "R123xyz123-!"
     ```
-    ```
-    /global/parameters/testEmailAddressForTestingResponses = "test-your-valid-email@valid.com"
-    ```
     Google Recaptcha secret key see: https://blog.logrocket.com/implement-recaptcha-react-application/ , or just create an account here https://www.google.com/recaptcha/admin/create .
 
     ```
@@ -127,11 +124,13 @@ Full deployment time will take roughly an hour with manual steps between (requir
         /global/parameters/stripeWebhookSigningSecret-live = "whsec_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" 
         ```
 
- 15) You can now request to SES production access to AWS [here](https://docs.aws.amazon.com/ses/latest/dg/request-production-access.html?icmpid=docs_ses_console). This will allow you to send emails unrestricted. 
- 16) run ```cdktf deploy webStackDev --auto-approve --ignore-missing-stack-dependencies``` 
- 17) run ```cdktf deploy webStackBlue webStackGreen --auto-approve --ignore-missing-stack-dependencies```
- 18) run ```cdktf deploy blueGreenToggleStack --auto-approve --ignore-missing-stack-dependencies```
- 19) if you toggle your blue/green stack, just running: ```cdktf deploy blueGreenToggleStack --auto-approve --ignore-missing-stack-dependencies``` may give you cross-stack-output errors, so just deploy the stack you are toggling to (eg: if blue then deploy webStackBlue first) and it will update the cross-stack-output data and then NOT throw an error.  
+   
+ 15) You will receive an email sent to the address defined in the config.HostingStack.yaml under the parameters: ```sesEmailIdentityAddress``` and ```sesEmailIdentityDomain```. These values need to be an email address that is accessable so that you can click the link in that email to verify the email identity. This can be an email from a different domain (eg: eg@gmail.com). This is so that you can send emails from SES to anyone outside of the hostedZone. Look for the email subjkect line: ```Amazon Web Services – Email Address Verification Request```
+ 16) You can now request to SES production access to AWS [here](https://docs.aws.amazon.com/ses/latest/dg/request-production-access.html?icmpid=docs_ses_console). This will allow you to send emails unrestricted. 
+ 17) run ```cdktf deploy webStackDev --auto-approve --ignore-missing-stack-dependencies``` 
+ 18) run ```cdktf deploy webStackBlue webStackGreen --auto-approve --ignore-missing-stack-dependencies```
+ 19) run ```cdktf deploy blueGreenToggleStack --auto-approve --ignore-missing-stack-dependencies```
+ 20) if you toggle your blue/green stack, just running: ```cdktf deploy blueGreenToggleStack --auto-approve --ignore-missing-stack-dependencies``` may give you cross-stack-output errors, so just deploy the stack you are toggling to (eg: if blue then deploy webStackBlue first) and it will update the cross-stack-output data and then NOT throw an error.  
 
 
 # Possible Deployment Issues
