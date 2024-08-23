@@ -66,7 +66,7 @@ const dataStackLive = new DataStack(
   join(__dirname, "stacks/data"),
   hostingStack.ssmResource.parameters["stripeToken-live"],
   hostingStack.ssmResource.parameters['recaptchaSiteSecret-live'],
-  "live_Free",
+  "live_free_plan",
   hostingStack.s3Resource
 );
 const dataStackDev = new DataStack(
@@ -82,7 +82,7 @@ const dataStackDev = new DataStack(
   join(__dirname, "stacks/data"),
   hostingStack.ssmResource.parameters["stripeToken-dev"],
   hostingStack.ssmResource.parameters['recaptchaSiteSecret-dev'],
-  "dev_Free",
+  "dev_free_plan",
   hostingStack.s3Resource
 );
 
@@ -99,7 +99,7 @@ webStacks[config['webStackDev'].name] = new WebStack(
   backendStateS3BucketName,
   hostingStack.ssmResource.parameters["stripeToken-dev"],
   hostingStack.ssmResource.parameters['contactUsEmail-dev'],
-  "dev_Free",
+  "dev_free_plan",
   hostingStack.ssmResource.parameters['cloudfrontLambdaUrlAccessUuid-dev'],
 );
 
@@ -115,7 +115,7 @@ webStacks[config['webStackGreen'].name] = new WebStack(
   backendStateS3BucketName,
   hostingStack.ssmResource.parameters["stripeToken-live"],
   hostingStack.ssmResource.parameters["contactUsEmail-live"],
-  "live_Free",
+  "live_free_plan",
   hostingStack.ssmResource.parameters['cloudfrontLambdaUrlAccessUuid-live'],
 );
 
@@ -131,7 +131,7 @@ webStacks[config['webStackBlue'].name] = new WebStack(
   backendStateS3BucketName,
   hostingStack.ssmResource.parameters["stripeToken-live"],
   hostingStack.ssmResource.parameters["contactUsEmail-live"],
-  "live_Free",
+  "live_free_plan",
   hostingStack.ssmResource.parameters['cloudfrontLambdaUrlAccessUuid-live'],
 );
 

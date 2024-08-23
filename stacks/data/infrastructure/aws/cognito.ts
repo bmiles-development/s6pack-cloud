@@ -27,7 +27,7 @@ export class Cognito extends Construct {
                 allowAdminCreateUserOnly: disableNewUsers
             },
             usernameAttributes: ["email"],
-            autoVerifiedAttributes: config.cognito.autoVerifiedAttributes,
+            //autoVerifiedAttributes: config.cognito.autoVerifiedAttributes,
             accountRecoverySetting: {
                 recoveryMechanism: [{
                     name: "verified_email",
