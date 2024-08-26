@@ -159,7 +159,7 @@ within main.ts you can see how multiple deployments can be created with seperate
     1) docker pull amazon/aws-stepfunctions-local
     2) docker run -p 8083:8083 amazon/aws-stepfunctions-local
 
-## Example Application Test Setup in the clupd folder
+## Example Application Test Setup in the cluod folder
     1) run npm update in the stacks/web/app/tests folder.
     2) email stripe support as indicated this error message here (if you try to run any payment tests you will see this error message):  ```Sending credit card numbers directly to the Stripe API is generally unsafe. We suggest you use test tokens that map to the test card you are using, see https://stripe.com/docs/testing. To enable raw card data APIs in test mode, see https://support.stripe.com/questions/enabling-access-to-raw-card-data-apis.```
 
