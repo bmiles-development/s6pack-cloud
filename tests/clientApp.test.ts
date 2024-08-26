@@ -125,7 +125,7 @@ describe("basic unauthorized calls using GRAPHQL_AUTH_MODE.AWS_IAM", () => {
       variables: {
         input: {
           captchaToken: "erghrew",
-          email: configVars.testEmailAddressForTestingResponses,
+          email: configVars["contactUsEmail-dev"],
           message: "unauth success",
           subject: "test unauth contact",
         },
@@ -160,7 +160,7 @@ describe("basic authorized calls using GRAPHQL_AUTH_MODE.AMAZON_COGNITO_USER_POO
       variables: {
         input: {
           captchaToken: "erghrew",
-          email: configVars.testEmailAddressForTestingResponses,
+          email: configVars["contactUsEmail-dev"],
           message: "auth success",
           subject: "test",
         },
@@ -206,7 +206,7 @@ describe("create user, upgrade plan to free plan, delete account", () => {
     let e: any;
     try {
       const splitEmail =
-        configVars.testEmailAddressForTestingResponses.split("@");
+        configVars["contactUsEmail-dev"].split("@");
       const testUser2 = splitEmail[0] + "+2@" + splitEmail[1];
 
       await API.graphql({
@@ -245,7 +245,7 @@ describe("create user, upgrade plan to free plan, delete account", () => {
     await Auth.signOut();
     await Auth.signIn(configVars.testUsername, configVars.testPassword);
     const splitEmail =
-      configVars.testEmailAddressForTestingResponses.split("@");
+      configVars["contactUsEmail-dev"].split("@");
     const testUser2 = splitEmail[0] + "+2@" + splitEmail[1];
     const response: any = await API.graphql(
       graphqlOperation(addStandardUser, { username: testUser2 })
@@ -255,7 +255,7 @@ describe("create user, upgrade plan to free plan, delete account", () => {
 
   test("delete standard user", async () => {
     const splitEmail =
-      configVars.testEmailAddressForTestingResponses.split("@");
+      configVars["contactUsEmail-dev"].split("@");
     const testUser2 = splitEmail[0] + "+2@" + splitEmail[1];
     const response: any = await API.graphql(
       graphqlOperation(deleteStandardUser, { id: testUser2 })
@@ -265,7 +265,7 @@ describe("create user, upgrade plan to free plan, delete account", () => {
 
   test("add admin user", async () => {
     const splitEmail =
-      configVars.testEmailAddressForTestingResponses.split("@");
+      configVars["contactUsEmail-dev"].split("@");
     const testUser3 = splitEmail[0] + "+3@" + splitEmail[1];
     const response: any = await API.graphql(
       graphqlOperation(addAdminUser, { username: testUser3 })
@@ -275,7 +275,7 @@ describe("create user, upgrade plan to free plan, delete account", () => {
 
   test("fail add admin duplicate user", async () => {
     const splitEmail =
-      configVars.testEmailAddressForTestingResponses.split("@");
+      configVars["contactUsEmail-dev"].split("@");
     const testUser3 = splitEmail[0] + "+3@" + splitEmail[1];
     let e: any;
     try {
@@ -292,7 +292,7 @@ describe("create user, upgrade plan to free plan, delete account", () => {
 
   test("delete admin user", async () => {
     const splitEmail =
-      configVars.testEmailAddressForTestingResponses.split("@");
+      configVars["contactUsEmail-dev"].split("@");
     const testUser3 = splitEmail[0] + "+3@" + splitEmail[1];
     const response: any = await API.graphql(
       graphqlOperation(deleteAdminUser, { id: testUser3 })
@@ -303,7 +303,7 @@ describe("create user, upgrade plan to free plan, delete account", () => {
   test("fail - add more standard users and max out 5 user plan limit", async () => {
     let e: any;
     const splitEmail =
-      configVars.testEmailAddressForTestingResponses.split("@");
+      configVars["contactUsEmail-dev"].split("@");
     const testUser2 = splitEmail[0] + "+2@" + splitEmail[1];
     const testUser3 = splitEmail[0] + "+3@" + splitEmail[1];
     const testUser4 = splitEmail[0] + "+4@" + splitEmail[1];
@@ -421,7 +421,7 @@ describe("create new user, then create Admin User and test functionality, then c
     await Auth.signIn(configVars.testUsername, configVars.testPassword);
     // create admin user
     const splitEmail =
-      configVars.testEmailAddressForTestingResponses.split("@");
+      configVars["contactUsEmail-dev"].split("@");
     const testUser2 = splitEmail[0] + "+2@" + splitEmail[1];
     const response: any = await API.graphql(
       graphqlOperation(addAdminUser, { username: testUser2 })
@@ -440,7 +440,7 @@ describe("create new user, then create Admin User and test functionality, then c
 
   test("add users until plan limit has been reached", async () => {
     const splitEmail =
-      configVars.testEmailAddressForTestingResponses.split("@");
+      configVars["contactUsEmail-dev"].split("@");
     const testUser3 = splitEmail[0] + "+3@" + splitEmail[1];
     const testUser4 = splitEmail[0] + "+4@" + splitEmail[1];
     const testUser5 = splitEmail[0] + "+5@" + splitEmail[1];
@@ -467,7 +467,7 @@ describe("create new user, then create Admin User and test functionality, then c
 
   test("admin user - changeStandardUserToAdmin", async () => {
     const splitEmail =
-      configVars.testEmailAddressForTestingResponses.split("@");
+      configVars["contactUsEmail-dev"].split("@");
     const testUser4 = splitEmail[0] + "+4@" + splitEmail[1];
     const response: any = await API.graphql(
       graphqlOperation(changeStandardUserToAdmin, { id: testUser4 })
@@ -477,7 +477,7 @@ describe("create new user, then create Admin User and test functionality, then c
 
   test("fail - delete standard user on admin user", async () => {
     const splitEmail =
-      configVars.testEmailAddressForTestingResponses.split("@");
+      configVars["contactUsEmail-dev"].split("@");
     const testUser4 = splitEmail[0] + "+4@" + splitEmail[1];
     let e: any;
     try {
@@ -492,7 +492,7 @@ describe("create new user, then create Admin User and test functionality, then c
 
   test("admin user - delete admin user", async () => {
     const splitEmail =
-      configVars.testEmailAddressForTestingResponses.split("@");
+      configVars["contactUsEmail-dev"].split("@");
     const testUser4 = splitEmail[0] + "+4@" + splitEmail[1];
     const response: any = await API.graphql(
       graphqlOperation(deleteAdminUser, { id: testUser4 })
@@ -502,7 +502,7 @@ describe("create new user, then create Admin User and test functionality, then c
 
   test("delete standard user", async () => {
     const splitEmail =
-      configVars.testEmailAddressForTestingResponses.split("@");
+      configVars["contactUsEmail-dev"].split("@");
     const testUser3 = splitEmail[0] + "+3@" + splitEmail[1];
     const response: any = await API.graphql(
       graphqlOperation(deleteStandardUser, { id: testUser3 })
@@ -512,7 +512,7 @@ describe("create new user, then create Admin User and test functionality, then c
 
   test("fail - add duplicate user", async () => {
     const splitEmail =
-      configVars.testEmailAddressForTestingResponses.split("@");
+      configVars["contactUsEmail-dev"].split("@");
     const testUser3 = splitEmail[0] + "+2@" + splitEmail[1];
     let e: any;
     try {
@@ -529,7 +529,7 @@ describe("create new user, then create Admin User and test functionality, then c
 
   test("current admin user - change self to standard user", async () => {
     const splitEmail =
-      configVars.testEmailAddressForTestingResponses.split("@");
+      configVars["contactUsEmail-dev"].split("@");
     const testUser2 = splitEmail[0] + "+2@" + splitEmail[1];
     const response: any = await API.graphql(
       graphqlOperation(changeAdminToStandardUser, { id: testUser2 })
@@ -541,7 +541,7 @@ describe("create new user, then create Admin User and test functionality, then c
 
   test("standard user - fail cant add user", async () => {
     const splitEmail =
-      configVars.testEmailAddressForTestingResponses.split("@");
+      configVars["contactUsEmail-dev"].split("@");
     const testUser3 = splitEmail[0] + "+3@" + splitEmail[1];
     let e: any;
     try {
@@ -556,7 +556,7 @@ describe("create new user, then create Admin User and test functionality, then c
 
   test("standard user fail - changeStandardUserToAdmin", async () => {
     const splitEmail =
-      configVars.testEmailAddressForTestingResponses.split("@");
+      configVars["contactUsEmail-dev"].split("@");
     const testUser3 = splitEmail[0] + "+3@" + splitEmail[1];
     let e: any;
     try {
@@ -584,7 +584,7 @@ describe("create new user, then create Admin User and test functionality, then c
       variables: {
         input: {
           captchaToken: "erghrew",
-          email: configVars.testEmailAddressForTestingResponses,
+          email: configVars["contactUsEmail-dev"],
           message: "unauth success",
           subject: "test",
         },
@@ -846,7 +846,7 @@ describe("deactivate and activate user", () => {
     await Auth.signOut();
     await Auth.signIn(configVars.testUsername, configVars.testPassword);
     const splitEmail =
-      configVars.testEmailAddressForTestingResponses.split("@");
+      configVars["contactUsEmail-dev"].split("@");
     const testUser2 = splitEmail[0] + "+2@" + splitEmail[1];
     const testUser3 = splitEmail[0] + "+3@" + splitEmail[1];
     const testUser4 = splitEmail[0] + "+4@" + splitEmail[1];
@@ -972,7 +972,7 @@ describe("downgrade and deactivate users", () => {
     await Auth.signOut();
     await Auth.signIn(configVars.testUsername, configVars.testPassword);
     const splitEmail =
-      configVars.testEmailAddressForTestingResponses.split("@");
+      configVars["contactUsEmail-dev"].split("@");
     const testUser2 = splitEmail[0] + "+2@" + splitEmail[1];
     const testUser3 = splitEmail[0] + "+3@" + splitEmail[1];
     const testUser4 = splitEmail[0] + "+4@" + splitEmail[1];
@@ -1111,7 +1111,7 @@ describe("cancel at period end -> speed up time -> plan actually cancels -> webh
     await Auth.signOut();
     await Auth.signIn(configVars.testUsername, configVars.testPassword);
     const splitEmail =
-      configVars.testEmailAddressForTestingResponses.split("@");
+      configVars["contactUsEmail-dev"].split("@");
     const testUser2 = splitEmail[0] + "+2@" + splitEmail[1];
     const testUser3 = splitEmail[0] + "+3@" + splitEmail[1];
     const testUser4 = splitEmail[0] + "+4@" + splitEmail[1];
@@ -1368,7 +1368,7 @@ describe("create new user get free trial plan, change to other plans", () => {
     await Auth.signOut();
     await Auth.signIn(configVars.testUsername, configVars.testPassword);
     const splitEmail =
-      configVars.testEmailAddressForTestingResponses.split("@");
+      configVars["contactUsEmail-dev"].split("@");
     const testUser2 = splitEmail[0] + "+2@" + splitEmail[1];
     const testUser3 = splitEmail[0] + "+3@" + splitEmail[1];
     const testUser4 = splitEmail[0] + "+4@" + splitEmail[1];

@@ -60,7 +60,7 @@ Full deployment time will take roughly an hour with manual steps between (requir
     ```
     Free plan id, can leave as is or can be customizable (eg: Free Plan see config.dataStack.yaml)
     ```
-    /global/parameters/testFreePlanId = "free_plan" 
+    /global/parameters/testFreeTrialPlanIdId = "free_plan" 
     ```
     Paid plan id (eg: Pro Plan see config.dataStack.yaml)
     ```

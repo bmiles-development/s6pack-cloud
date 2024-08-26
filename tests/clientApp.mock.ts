@@ -92,9 +92,9 @@ export async function GetConfigVars(Amplify) {
     "testCognitoClientId",
     "testFreeTrialPlanId",
     "testPaidPlanId",
-    "testFreePlanId",
+    "testFreeTrialPlanIdId",
     "testIdentityPoolId",
-    "testEmailAddressForTestingResponses",
+    "contactUsEmail-dev",
   ];
 
   for (let paramName of parameterNames) {
