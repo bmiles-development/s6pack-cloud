@@ -39,17 +39,25 @@ export async function ConfirmSetupIntent(
 
 export async function CreatePaymentMethod(
   stripe,
-  testCard = {
+  testCard = 'pm_card_visa'
+  /*{
     number: "4242424242424242",
     exp_month: 8,
     exp_year: 2026,
     cvc: "314",
-  }
+  }*/
+
 ) {
+
+  return {
+    id : "pm_card_visa"
+  }
+
+  /*
   return await stripe.paymentMethods.create({
     type: "card",
     card: testCard,
-  });
+  });*/
 }
 
 export async function CheckIfTestUserExists(configVars, cognito) {

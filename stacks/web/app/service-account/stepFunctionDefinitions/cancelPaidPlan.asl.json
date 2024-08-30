@@ -76,7 +76,7 @@
             "AdminGetGroup": {
               "Type": "Task",
               "Parameters": {
-                "UserPoolId": "us-east-2_AwJnQGiC7",
+                "UserPoolId": "${cognitoEntity}",
                 "Username.$": "$.Username"
               },
               "Resource": "arn:aws:states:::aws-sdk:cognitoidentityprovider:adminListGroupsForUser",

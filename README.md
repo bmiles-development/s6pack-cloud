@@ -179,6 +179,10 @@ Run Tests
 Run Specific Test
 ```npm test -- -t stacks/web/app/tests/user.test.ts 'test name here' ```
 
+If you get this error:
+ ```Sending credit card numbers directly to the Stripe API is generally unsafe. We suggest you use test tokens that map to the test card you are using, see https://stripe.com/docs/testing. To enable raw card data APIs in test mode, see https://support.stripe.com/questions/enabling-access-to-raw-card-data-apis.``` You will need to chat with a stripe agent to enable raw card data APIs in test mode
+
+
 
 ## Lambda Layers
 How to creat new node.js Lambda Layers:
