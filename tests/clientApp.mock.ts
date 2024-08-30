@@ -39,17 +39,19 @@ export async function ConfirmSetupIntent(
 
 export async function CreatePaymentMethod(
   stripe,
-  testCard = {
+  testCard = 'pm_card_visa'
+  /*{ //no longer works without requesting special permission from stripe. use test card instead (see below)
     number: "4242424242424242",
     exp_month: 8,
     exp_year: 2026,
     cvc: "314",
-  }
+  }*/
+
 ) {
-  return await stripe.paymentMethods.create({
-    type: "card",
-    card: testCard,
-  });
+
+  return await stripe.paymentMethods.retrieve(
+    testCard
+  );
 }
 
 export async function CheckIfTestUserExists(configVars, cognito) {
@@ -92,9 +94,9 @@ export async function GetConfigVars(Amplify) {
     "testCognitoClientId",
     "testFreeTrialPlanId",
     "testPaidPlanId",
-    "testFreePlanId",
+    "testFreeTrialPlanId",
     "testIdentityPoolId",
-    "testEmailAddressForTestingResponses",
+    "contactUsEmail-dev",
   ];
 
   for (let paramName of parameterNames) {
@@ -190,7 +192,7 @@ export async function CognitoCreateTestUser(configVars, cognito) {
 
   try {
     const signUpResponse = await cognito.send(new SignUpCommand(signUpParams));
-
+    await delay(5000); //new delay from AWS?? compensate for it here
     // Confirming user sign-up
     const confirmSignUpParams = {
       UserPoolId: configVars.testUserPoolId,
@@ -328,4 +330,8 @@ export async function DynamoGetTenantWithProcessorCustomerId(
   const command = new GetItemCommand(input);
   const response = await client.send(command);
   return response;
+}
+
+async function delay(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }

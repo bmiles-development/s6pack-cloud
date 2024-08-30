@@ -60,7 +60,7 @@ Full deployment time will take roughly an hour with manual steps between (requir
     ```
     Free plan id, can leave as is or can be customizable (eg: Free Plan see config.dataStack.yaml)
     ```
-    /global/parameters/testFreePlanId = "free_plan" 
+    /global/parameters/testFreeTrialPlanIdId = "dev_business_plan" 
     ```
     Paid plan id (eg: Pro Plan see config.dataStack.yaml)
     ```
@@ -159,45 +159,29 @@ within main.ts you can see how multiple deployments can be created with seperate
     1) docker pull amazon/aws-stepfunctions-local
     2) docker run -p 8083:8083 amazon/aws-stepfunctions-local
 
-## Example Application Test Setup in the cluod folder
-    1) run npm update in the stacks/web/app/tests folder.
-    2) email stripe support as indicated this error message here (if you try to run any payment tests you will see this error message):  ```Sending credit card numbers directly to the Stripe API is generally unsafe. We suggest you use test tokens that map to the test card you are using, see https://stripe.com/docs/testing. To enable raw card data APIs in test mode, see https://support.stripe.com/questions/enabling-access-to-raw-card-data-apis.```
-
-## Create Test User Manually 
-    Simplest is to create one using the s6pack client, but it may be necessary to create a user from the AWS admin interface (for example, if you would like to use a username/email address that is not real, like test@test.com) you can do it with the following steps:
-        1) Create a cognito user (username is an email address) and add a password.
-        2) edit the user andd add the email again in the email field (same as the username) and check the box mark as verified
-        3) add another attribute "name", and  enter a UUID (eg: "e9a9f67c-8a72-498e-a097-c9cb8e922b94")
-        4) add the user to the appropriate group
-        5) go to the Appsync admin and use the app associated with the user pool (eg Dev)
-        6) go the the queries page and log in to user pools, it will have you reset the password
-##
-
-Run Tests
-```npm test```
-
-Run Specific Test
-```npm test -- -t stacks/web/app/tests/user.test.ts 'test name here' ```
-
+## Example Application Test Setup in the cloud folder
+    1) run npm update in the ./tests folder.
+    2) Run Tests 
+        ```npm test```
+    3) Run Specific Test
+        ```npm test -- -t stacks/web/app/tests/user.test.ts 'test name here' ```
 
 ## Lambda Layers
 How to creat new node.js Lambda Layers:
 https://dev.to/afrazkhan/how-to-setup-aws-lambda-layers-nodejs-182
-
-
-1) ```npm init -i```
-2) ```npm i {package_names}```
-3)  add this snippet to package.json ```"scripts": {
+    1) ```npm init -i```
+    2) ```npm i {package_names}```
+    3) add this snippet to package.json ```"scripts": {
         "build": "npm install && mkdir -p nodejs && cp -r node_modules nodejs/ && zip -r  {file-name}.zip nodejs"
     }```
-4) ```npm run build```
+    4)```npm run build```
 
 
 # Upgrading
-1) adjust package.json (cdktf, @cdktf/provider-*, @types/node) to latest versions then in root folder and run ```npm update```
-2) run ```npm list -g``` to get a list of global npm packages and for each module in question (aws-cdk, cdktf-cli) run ```sudo npm install -g <module-name>```
-3)```deploy``` the stack. If delpying fails, then:
-4) For each stack, you may need to upgrade each stack in the folder ```cdktf.out/stacks``` with ```cd cdktf.out/stacks/$nameofstack``` by running ```terraform init -upgrade```
+    1) adjust package.json (cdktf, @cdktf/provider-*, @types/node) to latest versions then in root folder and run ```npm update```
+    2) run ```npm list -g``` to get a list of global npm packages and for each module in question (aws-cdk, cdktf-cli) run ```sudo npm install -g <module-name>```
+    3) ```deploy``` the stack. If delpying fails, then:
+    4) For each stack, you may need to upgrade each stack in the folder ```cdktf.out/stacks``` with ```cd cdktf.out/stacks/$nameofstack``` by running ```terraform init -upgrade```
 
 # Update notes for serverless v2
 npm update
@@ -207,7 +191,7 @@ cdktf get
 npm i -D @types/node //run this if main.ts cant find 'fs' or 'path'
 when you run cdktf deploy, it will prompt you to ```terraform init -upgrade``` for each stack (see Upgrading section above, step 3)
 
-# Issues and Solutions
+# Potential Issues and Solutions
 
 ```cdktf destroy webStackGreen webStackBlue webStackDev``` causes error with Appsync: "Error: error deleting Appsync Domain Name "<domain_name_here>": BadRequestException: Domain name must be disassociated before it can be deleted." Known issue here https://github.com/hashicorp/terraform-provider-aws/issues/25322. 
 

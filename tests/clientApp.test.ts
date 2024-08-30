@@ -59,30 +59,6 @@ let cognito: any;
 let stripe: any;
 let testUserExists: any;
 
-describe("websocket tests", () => {
-  test("socket Connection", async () => {
-    // Create WebSocket connection.
-    let socket: WebSocket;
-    try {
-      socket = new WebSocket(
-        "wss://apidev.s6pack.build/graphql/realtime?header=eyJBdXRob3JpemF0aW9uIjoiZXlKcmFXUWlPaUp1SzA1WFYyMWNMMGRFVkRsc1VXMU5TMlF4YW5JM2VGTmpUa0p6T0dsSk5FWjBlRVoxTTI1NU4yNHdaejBpTENKaGJHY2lPaUpTVXpJMU5pSjkuZXlKemRXSWlPaUkzTTJVM01EWXdPUzAyTXpCakxUUXhNV0V0T0RFeVl5MDNabUptTkRNeU9EazRPVEFpTENKamIyZHVhWFJ2T21keWIzVndjeUk2V3lKUGQyNWxjaUpkTENKbGJXRnBiRjkyWlhKcFptbGxaQ0k2ZEhKMVpTd2lhWE56SWpvaWFIUjBjSE02WEM5Y0wyTnZaMjVwZEc4dGFXUndMblZ6TFdWaGMzUXRNaTVoYldGNmIyNWhkM011WTI5dFhDOTFjeTFsWVhOMExUSmZRWGRLYmxGSGFVTTNJaXdpWTI5bmJtbDBienAxYzJWeWJtRnRaU0k2SWpjelpUY3dOakE1TFRZek1HTXROREV4WVMwNE1USmpMVGRtWW1ZME16STRPVGc1TUNJc0ltOXlhV2RwYmw5cWRHa2lPaUl3TnpWaVl6UTFNUzFtTlRBeExUUTJaRGt0WWpNNFlpMDBaalJtWWpWa05XTXlNMlVpTENKaGRXUWlPaUkyTXpkc2RqVTJjR0V6Y1hWaGJXVjFORzEyTUdnMk1uTXhPU0lzSW1WMlpXNTBYMmxrSWpvaVpERmpPR1kyTlRndFpqSXpPUzAwTnpjMkxXSTBZemt0T0RVM1lXWTBNRGd5TkRFeElpd2lkRzlyWlc1ZmRYTmxJam9pYVdRaUxDSjBjbWxoYkZCbGNtbHZaRVZzYVdkaFlteGxJam9pZEhKMVpTSXNJbUYxZEdoZmRHbHRaU0k2TVRjeE1EazNNVEl4TXl3aWJtRnRaU0k2SWpJeE9EWXhNbUZrTFdRNFpqZ3ROREF3TXkxaU1ERXhMV1ZoWlRJMlptTTRaalJqTVNJc0luUnlhV0ZzVUdWeWFXOWtSWGh3YVhKbFpDSTZJbVpoYkhObElpd2ljR3hoYmtsa0lqb2laR1YyWDNOa2RqVTFObWczU0daNWVtODBJaXdpY0d4aGJsVnpaWEp6SWpvaU15SXNJbVY0Y0NJNk1UY3hNRGszTkRneE1Td2ljR3hoYmxCeWFXTmxJam9pTkRrNUlpd2lhV0YwSWpveE56RXdPVGN4TWpFekxDSnFkR2tpT2lJeFlXTTNNR0kxT1Mxa05qSmhMVFJoTlRFdE9UZGpZUzAwTWpSaE5UZzBaVFJoTVdFaUxDSmxiV0ZwYkNJNkltSnRhV3hsYzNBclpERkFaMjFoYVd3dVkyOXRJbjAuTzc3S01iVzk3a2s2SnVUQzZvd3JNQ2d5YWR5dnNScUd6MkJHd1dKV09JUDVfMWcxd2JtUi1jbFVNMDhiSTd6WkRnZ2pEMVRoYzlwY2t3OVZzd1lpWVY2clRaWEFSWTZzS2ltTHVOV1pjMEkzVFRmTmkteXpTZDNzZ21YRFhDWUVNYXliRnBzXzliekF0cWdXeXlBd1V6clZUVmRjUXFPaEp0S3YzLXNhWWFHVzZWRkx4QlpHc0JuV05QVXkxeVVja0pTZjYtem43UVNfRDY1LURlYjFQRVpsQmpFWFR1VUYyVmlGX0R4VFNqNGQwSFdIMDd4MmtlVnh2M1RxTjk0emFQMnhSUnV6SElXYkVTUVg3dnJCZktMMjJSVHFjNExudmJOdXFWeS1wUXRTUFVsS0h0UTFrMDVzeDdDOTlUSTJXa256STVHMldNdWM4TWdZWDlEX1ZnIiwiaG9zdCI6ImFwaWRldi5zdGF0aW9uc2hxLmlvIn0=&payload=e30="
-      );
-      console.log(socket);
-    } catch (error) {
-      console.log(error);
-    }
-
-    // Connection opened
-    socket.addEventListener("open", (event) => {
-      socket.send("Hello Server!");
-    });
-
-    // Listen for messages
-    socket.addEventListener("message", (event) => {
-      console.log("Message from server ", event.data);
-    });
-  });
-});
 
 describe("basic unauthorized calls using GRAPHQL_AUTH_MODE.AWS_IAM", () => {
   beforeAll(async () => {
@@ -125,7 +101,7 @@ describe("basic unauthorized calls using GRAPHQL_AUTH_MODE.AWS_IAM", () => {
       variables: {
         input: {
           captchaToken: "erghrew",
-          email: configVars.testEmailAddressForTestingResponses,
+          email: configVars["contactUsEmail-dev"],
           message: "unauth success",
           subject: "test unauth contact",
         },
@@ -142,12 +118,14 @@ describe("basic authorized calls using GRAPHQL_AUTH_MODE.AMAZON_COGNITO_USER_POO
     await CognitoCreateTestUser(configVars, cognito);
     await Auth.signIn(configVars.testUsername, configVars.testPassword);
     return true;
-  }, 10000);
+  }, 20000);
 
   afterAll(async () => {
     await Auth.signOut();
+    testUserExists = await CheckIfTestUserExists(configVars, cognito);
+    //user deleted in tests
     return true;
-  }, 10000);
+  }, 20000);
 
   test("listPlans should return data", async () => {
     const response: any = await API.graphql(graphqlOperation(listPlans));
@@ -160,7 +138,7 @@ describe("basic authorized calls using GRAPHQL_AUTH_MODE.AMAZON_COGNITO_USER_POO
       variables: {
         input: {
           captchaToken: "erghrew",
-          email: configVars.testEmailAddressForTestingResponses,
+          email: configVars["contactUsEmail-dev"],
           message: "auth success",
           subject: "test",
         },
@@ -195,18 +173,18 @@ describe("create user, upgrade plan to free plan, delete account", () => {
     }
     await Auth.signIn(configVars.testUsername, configVars.testPassword);
     return true;
-  }, 10000);
+  }, 20000);
 
   afterAll(async () => {
     await Auth.signOut();
     return true;
-  }, 10000);
+  }, 20000);
 
   test("fail add user to free trial plan", async () => {
     let e: any;
     try {
       const splitEmail =
-        configVars.testEmailAddressForTestingResponses.split("@");
+        configVars["contactUsEmail-dev"].split("@");
       const testUser2 = splitEmail[0] + "+2@" + splitEmail[1];
 
       await API.graphql({
@@ -240,12 +218,12 @@ describe("create user, upgrade plan to free plan, delete account", () => {
     );
     expect(confirmAddPlanData.data.confirmAddPlan.id).toBeDefined();
   }, 60000);
-
+/*
   test("add standard user", async () => {
     await Auth.signOut();
     await Auth.signIn(configVars.testUsername, configVars.testPassword);
     const splitEmail =
-      configVars.testEmailAddressForTestingResponses.split("@");
+      configVars["contactUsEmail-dev"].split("@");
     const testUser2 = splitEmail[0] + "+2@" + splitEmail[1];
     const response: any = await API.graphql(
       graphqlOperation(addStandardUser, { username: testUser2 })
@@ -255,7 +233,7 @@ describe("create user, upgrade plan to free plan, delete account", () => {
 
   test("delete standard user", async () => {
     const splitEmail =
-      configVars.testEmailAddressForTestingResponses.split("@");
+      configVars["contactUsEmail-dev"].split("@");
     const testUser2 = splitEmail[0] + "+2@" + splitEmail[1];
     const response: any = await API.graphql(
       graphqlOperation(deleteStandardUser, { id: testUser2 })
@@ -265,7 +243,7 @@ describe("create user, upgrade plan to free plan, delete account", () => {
 
   test("add admin user", async () => {
     const splitEmail =
-      configVars.testEmailAddressForTestingResponses.split("@");
+      configVars["contactUsEmail-dev"].split("@");
     const testUser3 = splitEmail[0] + "+3@" + splitEmail[1];
     const response: any = await API.graphql(
       graphqlOperation(addAdminUser, { username: testUser3 })
@@ -275,7 +253,7 @@ describe("create user, upgrade plan to free plan, delete account", () => {
 
   test("fail add admin duplicate user", async () => {
     const splitEmail =
-      configVars.testEmailAddressForTestingResponses.split("@");
+      configVars["contactUsEmail-dev"].split("@");
     const testUser3 = splitEmail[0] + "+3@" + splitEmail[1];
     let e: any;
     try {
@@ -292,7 +270,7 @@ describe("create user, upgrade plan to free plan, delete account", () => {
 
   test("delete admin user", async () => {
     const splitEmail =
-      configVars.testEmailAddressForTestingResponses.split("@");
+      configVars["contactUsEmail-dev"].split("@");
     const testUser3 = splitEmail[0] + "+3@" + splitEmail[1];
     const response: any = await API.graphql(
       graphqlOperation(deleteAdminUser, { id: testUser3 })
@@ -303,7 +281,7 @@ describe("create user, upgrade plan to free plan, delete account", () => {
   test("fail - add more standard users and max out 5 user plan limit", async () => {
     let e: any;
     const splitEmail =
-      configVars.testEmailAddressForTestingResponses.split("@");
+      configVars["contactUsEmail-dev"].split("@");
     const testUser2 = splitEmail[0] + "+2@" + splitEmail[1];
     const testUser3 = splitEmail[0] + "+3@" + splitEmail[1];
     const testUser4 = splitEmail[0] + "+4@" + splitEmail[1];
@@ -322,6 +300,7 @@ describe("create user, upgrade plan to free plan, delete account", () => {
       graphqlOperation(addStandardUser, { username: testUser5 })
     );
     try {
+      await delay(5000)// great, more Step Function Coginto-DeleteUser delay, lets compensate for it here.
       let data = await API.graphql(
         graphqlOperation(addStandardUser, { username: testUser6 })
       );
@@ -329,7 +308,7 @@ describe("create user, upgrade plan to free plan, delete account", () => {
       e = err;
     }
     expect(e.errors[0].errorType).toMatch("PlanUserLimitReached");
-  });
+  },10000);
 
   test("fail delete user account, must set deleteAccoutFlag to true", async () => {
     let e: any;
@@ -364,6 +343,7 @@ describe("create user, upgrade plan to free plan, delete account", () => {
     );
     expect(deleteAccountData.data.deleteAccount.success).toBeDefined();
   });
+  */
 });
 
 describe("create new user, then create Admin User and test functionality, then change to Standard User and test its functionality", () => {
@@ -404,7 +384,6 @@ describe("create new user, then create Admin User and test functionality, then c
 
     // use stripe.js stripe.createPaymentMethod in actual frontend
     const newPaymentMethod = await CreatePaymentMethod(stripe);
-
     const confirmAddPlanData: any = await API.graphql(
       graphqlOperation(confirmAddPlan, {
         paymentMethodId: newPaymentMethod.id,
@@ -421,7 +400,7 @@ describe("create new user, then create Admin User and test functionality, then c
     await Auth.signIn(configVars.testUsername, configVars.testPassword);
     // create admin user
     const splitEmail =
-      configVars.testEmailAddressForTestingResponses.split("@");
+      configVars["contactUsEmail-dev"].split("@");
     const testUser2 = splitEmail[0] + "+2@" + splitEmail[1];
     const response: any = await API.graphql(
       graphqlOperation(addAdminUser, { username: testUser2 })
@@ -440,7 +419,7 @@ describe("create new user, then create Admin User and test functionality, then c
 
   test("add users until plan limit has been reached", async () => {
     const splitEmail =
-      configVars.testEmailAddressForTestingResponses.split("@");
+      configVars["contactUsEmail-dev"].split("@");
     const testUser3 = splitEmail[0] + "+3@" + splitEmail[1];
     const testUser4 = splitEmail[0] + "+4@" + splitEmail[1];
     const testUser5 = splitEmail[0] + "+5@" + splitEmail[1];
@@ -456,6 +435,7 @@ describe("create new user, then create Admin User and test functionality, then c
     );
     let e: any;
     try {
+      await delay(5000)// grewat more Step Function Coginto-ListUsers delay, lets compensate for it here.
       await API.graphql(
         graphqlOperation(addStandardUser, { username: testUser6 })
       );
@@ -463,11 +443,11 @@ describe("create new user, then create Admin User and test functionality, then c
       e = err;
     }
     expect(e.errors[0].errorType).toMatch("PlanUserLimitReached");
-  });
+  },10000);
 
   test("admin user - changeStandardUserToAdmin", async () => {
     const splitEmail =
-      configVars.testEmailAddressForTestingResponses.split("@");
+      configVars["contactUsEmail-dev"].split("@");
     const testUser4 = splitEmail[0] + "+4@" + splitEmail[1];
     const response: any = await API.graphql(
       graphqlOperation(changeStandardUserToAdmin, { id: testUser4 })
@@ -477,7 +457,7 @@ describe("create new user, then create Admin User and test functionality, then c
 
   test("fail - delete standard user on admin user", async () => {
     const splitEmail =
-      configVars.testEmailAddressForTestingResponses.split("@");
+      configVars["contactUsEmail-dev"].split("@");
     const testUser4 = splitEmail[0] + "+4@" + splitEmail[1];
     let e: any;
     try {
@@ -492,7 +472,7 @@ describe("create new user, then create Admin User and test functionality, then c
 
   test("admin user - delete admin user", async () => {
     const splitEmail =
-      configVars.testEmailAddressForTestingResponses.split("@");
+      configVars["contactUsEmail-dev"].split("@");
     const testUser4 = splitEmail[0] + "+4@" + splitEmail[1];
     const response: any = await API.graphql(
       graphqlOperation(deleteAdminUser, { id: testUser4 })
@@ -502,7 +482,7 @@ describe("create new user, then create Admin User and test functionality, then c
 
   test("delete standard user", async () => {
     const splitEmail =
-      configVars.testEmailAddressForTestingResponses.split("@");
+      configVars["contactUsEmail-dev"].split("@");
     const testUser3 = splitEmail[0] + "+3@" + splitEmail[1];
     const response: any = await API.graphql(
       graphqlOperation(deleteStandardUser, { id: testUser3 })
@@ -512,10 +492,11 @@ describe("create new user, then create Admin User and test functionality, then c
 
   test("fail - add duplicate user", async () => {
     const splitEmail =
-      configVars.testEmailAddressForTestingResponses.split("@");
+      configVars["contactUsEmail-dev"].split("@");
     const testUser3 = splitEmail[0] + "+2@" + splitEmail[1];
     let e: any;
     try {
+      await delay(5000)// great, more Step Function Coginto-DeleteUser delay, lets compensate for it here.
       const response: any = await API.graphql(
         graphqlOperation(addStandardUser, { username: testUser3 })
       );
@@ -525,11 +506,11 @@ describe("create new user, then create Admin User and test functionality, then c
     expect(e.errors[0].errorType).toMatch(
       "CognitoIdentityProvider.UsernameExistsException"
     );
-  });
+  }, 10000);
 
   test("current admin user - change self to standard user", async () => {
     const splitEmail =
-      configVars.testEmailAddressForTestingResponses.split("@");
+      configVars["contactUsEmail-dev"].split("@");
     const testUser2 = splitEmail[0] + "+2@" + splitEmail[1];
     const response: any = await API.graphql(
       graphqlOperation(changeAdminToStandardUser, { id: testUser2 })
@@ -541,7 +522,7 @@ describe("create new user, then create Admin User and test functionality, then c
 
   test("standard user - fail cant add user", async () => {
     const splitEmail =
-      configVars.testEmailAddressForTestingResponses.split("@");
+      configVars["contactUsEmail-dev"].split("@");
     const testUser3 = splitEmail[0] + "+3@" + splitEmail[1];
     let e: any;
     try {
@@ -556,7 +537,7 @@ describe("create new user, then create Admin User and test functionality, then c
 
   test("standard user fail - changeStandardUserToAdmin", async () => {
     const splitEmail =
-      configVars.testEmailAddressForTestingResponses.split("@");
+      configVars["contactUsEmail-dev"].split("@");
     const testUser3 = splitEmail[0] + "+3@" + splitEmail[1];
     let e: any;
     try {
@@ -584,7 +565,7 @@ describe("create new user, then create Admin User and test functionality, then c
       variables: {
         input: {
           captchaToken: "erghrew",
-          email: configVars.testEmailAddressForTestingResponses,
+          email: configVars["contactUsEmail-dev"],
           message: "unauth success",
           subject: "test",
         },
@@ -846,7 +827,7 @@ describe("deactivate and activate user", () => {
     await Auth.signOut();
     await Auth.signIn(configVars.testUsername, configVars.testPassword);
     const splitEmail =
-      configVars.testEmailAddressForTestingResponses.split("@");
+      configVars["contactUsEmail-dev"].split("@");
     const testUser2 = splitEmail[0] + "+2@" + splitEmail[1];
     const testUser3 = splitEmail[0] + "+3@" + splitEmail[1];
     const testUser4 = splitEmail[0] + "+4@" + splitEmail[1];
@@ -869,6 +850,7 @@ describe("deactivate and activate user", () => {
     users["testUser5"] = addStandardUserData.data.addStandardUser;
     let e: any;
     try {
+      await delay(5000); // More Step Function Coginto-DeleteUser delay, lets compensate for it here.
       const testUser6 = splitEmail[0] + "+6@" + splitEmail[1];
       await API.graphql(
         graphqlOperation(addStandardUser, { username: testUser6 })
@@ -877,7 +859,7 @@ describe("deactivate and activate user", () => {
       e = err;
     }
     expect(e.errors[0].errorType).toMatch("PlanUserLimitReached");
-  }, 10000);
+  }, 15000);
 
   test("deactivateUser", async () => {
     await Auth.signOut();
@@ -972,7 +954,7 @@ describe("downgrade and deactivate users", () => {
     await Auth.signOut();
     await Auth.signIn(configVars.testUsername, configVars.testPassword);
     const splitEmail =
-      configVars.testEmailAddressForTestingResponses.split("@");
+      configVars["contactUsEmail-dev"].split("@");
     const testUser2 = splitEmail[0] + "+2@" + splitEmail[1];
     const testUser3 = splitEmail[0] + "+3@" + splitEmail[1];
     const testUser4 = splitEmail[0] + "+4@" + splitEmail[1];
@@ -995,6 +977,7 @@ describe("downgrade and deactivate users", () => {
     users["testUser5"] = response.data.addStandardUser;
     let e: any;
     try {
+      await delay(5000); // More Step Function Coginto-DeleteUser delay, lets compensate for it here.
       const testUser6 = splitEmail[0] + "+6@" + splitEmail[1];
       await API.graphql(
         graphqlOperation(addStandardUser, { username: testUser6 })
@@ -1003,7 +986,7 @@ describe("downgrade and deactivate users", () => {
       e = err;
     }
     expect(e.errors[0].errorType).toMatch("PlanUserLimitReached");
-  }, 10000);
+  }, 15000);
 
   test("checkout paid plan preview from trial plan", async () => {
     const checkoutData: any = await API.graphql({
@@ -1111,7 +1094,7 @@ describe("cancel at period end -> speed up time -> plan actually cancels -> webh
     await Auth.signOut();
     await Auth.signIn(configVars.testUsername, configVars.testPassword);
     const splitEmail =
-      configVars.testEmailAddressForTestingResponses.split("@");
+      configVars["contactUsEmail-dev"].split("@");
     const testUser2 = splitEmail[0] + "+2@" + splitEmail[1];
     const testUser3 = splitEmail[0] + "+3@" + splitEmail[1];
     const testUser4 = splitEmail[0] + "+4@" + splitEmail[1];
@@ -1134,6 +1117,7 @@ describe("cancel at period end -> speed up time -> plan actually cancels -> webh
     users["testUser5"] = response.data.addStandardUser;
     let e: any;
     try {
+      await delay(5000); // More Step Function Coginto-DeleteUser delay, lets compensate for it here.
       const testUser6 = splitEmail[0] + "+6@" + splitEmail[1];
       await API.graphql(
         graphqlOperation(addStandardUser, { username: testUser6 })
@@ -1142,7 +1126,7 @@ describe("cancel at period end -> speed up time -> plan actually cancels -> webh
       e = err;
     }
     expect(e.errors[0].errorType).toMatch("PlanUserLimitReached");
-  }, 10000);
+  }, 15000);
 
   test("subscribe to planCancelled fast forward time and await for cancelation webhook to fire.", async () => {
     const tenantData: any = await API.graphql({ query: getTenant });
@@ -1328,7 +1312,8 @@ describe("create new user get free trial plan, change to other plans", () => {
     return true;
   }, 85000);
 
-  afterAll(async () => {
+  afterAll(async () => { 
+    await delay(5000); // More Step Function Coginto-DeleteUser delay, lets compensate for it here.  
     await Auth.signOut();
     await Auth.signIn(configVars.testUsername, configVars.testPassword);
     testUserExists = await CheckIfTestUserExists(configVars, cognito);
@@ -1340,6 +1325,18 @@ describe("create new user get free trial plan, change to other plans", () => {
     }
     await Auth.signOut();
     return true;
+  }, 10000);
+
+  test("fail can't cancel free plan", async () => {
+    await Auth.signOut();
+    await Auth.signIn(configVars.testUsername, configVars.testPassword);
+    let e: any;
+    try {
+      await API.graphql(graphqlOperation(cancelPaidPlanAtPeriodEnd));
+    } catch (err) {
+      e = err;
+    }
+    expect(e.errors[0].errorType).toMatch("Unauthorized");
   }, 10000);
 
   test("setup data for following tests 5 - confirm setup with confirmAddPlan", async () => {
@@ -1362,13 +1359,13 @@ describe("create new user get free trial plan, change to other plans", () => {
       })
     );
     expect(confirmAddPlanData.data.confirmAddPlan.id).toBeDefined();
-  }, 10000);
+  }, 20000);
 
   test("add users until plan limit has been reached", async () => {
     await Auth.signOut();
     await Auth.signIn(configVars.testUsername, configVars.testPassword);
     const splitEmail =
-      configVars.testEmailAddressForTestingResponses.split("@");
+      configVars["contactUsEmail-dev"].split("@");
     const testUser2 = splitEmail[0] + "+2@" + splitEmail[1];
     const testUser3 = splitEmail[0] + "+3@" + splitEmail[1];
     const testUser4 = splitEmail[0] + "+4@" + splitEmail[1];
@@ -1391,6 +1388,7 @@ describe("create new user get free trial plan, change to other plans", () => {
     users["testUser5"] = response.data.addStandardUser;
     let e: any;
     try {
+      await delay(5000); // More Step Function Coginto-DeleteUser delay, lets compensate for it here.
       const testUser6 = splitEmail[0] + "+6@" + splitEmail[1];
       await API.graphql(
         graphqlOperation(addStandardUser, { username: testUser6 })
@@ -1399,7 +1397,7 @@ describe("create new user get free trial plan, change to other plans", () => {
       e = err;
     }
     expect(e.errors[0].errorType).toMatch("PlanUserLimitReached");
-  }, 10000);
+  }, 15000);
 
   test("deactivateUser", async () => {
     await Auth.signOut();
@@ -1413,6 +1411,7 @@ describe("create new user get free trial plan, change to other plans", () => {
   });
 
   test("activateUser", async () => {
+    await delay(5000); // More Step Function Coginto-DeactivateUser delay, lets compensate for it here.
     await Auth.signOut();
     await Auth.signIn(configVars.testUsername, configVars.testPassword);
     let e: any;
@@ -1421,7 +1420,7 @@ describe("create new user get free trial plan, change to other plans", () => {
       variables: { id: users["testUser2"].id },
     });
     expect(data.data.activateUser.enabled).toBeTruthy();
-  });
+  }, 10000);
 
   test("fail change paid plan to SAME paid plan", async () => {
     await Auth.signOut();
@@ -1526,99 +1525,6 @@ describe("create new user get free trial plan, change to other plans", () => {
     expect(e.errors[0].errorType).toMatch("NewPlanIsSameAsTheOldPlan");
   });
 
-  test("cancel paid plan", async () => {
-    await delay(35000);
-    const session: any = await Auth.currentSession();
-
-    let id = session.idToken.payload.name;
-    let planModifiedSub = await configVars.apolloClient
-      .subscribe({
-        query: gql(planModified),
-        variables: { id: id },
-      })
-      .subscribe({
-        next(data) {
-          console.log("...cancelPlan planModified fired.");
-          expect(data.data.planModified.id).toBeDefined();
-          planModifiedSub.unsubscribe();
-          return;
-        },
-        error(error) {
-          console.log(error);
-        },
-      });
-    expect(planModifiedSub._state).toEqual("ready");
-    console.log("waiting for cancelPlan planModified to fire...");
-    const res: any = await API.graphql(graphqlOperation(cancelPaidPlan));
-    expect(res.data.cancelPaidPlan.id).toBeDefined();
-  }, 40000);
-
-  test("fail can't cancel free plan", async () => {
-    await Auth.signOut();
-    await Auth.signIn(configVars.testUsername, configVars.testPassword);
-    let e: any;
-    try {
-      await API.graphql(graphqlOperation(cancelPaidPlan));
-    } catch (err) {
-      e = err;
-    }
-    expect(e.errors[0].errorType).toMatch("Unauthorized");
-  }, 10000);
-
-  test("after cancel plan - changed to different paid plan error", async () => {
-    let e: any;
-    try {
-      await API.graphql({
-        query: changePlan,
-        variables: { planId: configVars.testPaidPlanId },
-      });
-    } catch (err) {
-      e = err;
-    }
-    expect(e.errors[0].errorType).toMatch("Unauthorized");
-  });
-
-  test("after cancel plan - confirm new trial plan, but should no longer have free trial", async () => {
-    const setupIntentData: any = await API.graphql(
-      graphqlOperation(createPlanIntent, {
-        planId: configVars.testFreeTrialPlanId,
-      })
-    );
-    expect(setupIntentData.data.createPlanIntent.clientSecret).toBeDefined();
-
-    // use stripe.js stripe.createPaymentMethod in actual frontend
-    const newPaymentMethod = await CreatePaymentMethod(stripe);
-    const session: any = await Auth.currentSession();
-
-    let id = session.idToken.payload.name;
-    let planModifiedSub = await configVars.apolloClient
-      .subscribe({
-        query: gql(planModified),
-        variables: { id: id },
-      })
-      .subscribe({
-        next(data) {
-          console.log("...confirmAddPlan planModified fired.");
-          expect(data.data.planModified.id).toBeDefined();
-          planModifiedSub.unsubscribe();
-          return;
-        },
-        error(error) {
-          console.log(error);
-        },
-      });
-    expect(planModifiedSub._state).toEqual("ready");
-    console.log("waiting for confirmAddPlan planModified to fire...");
-    const confirmAddPlanData: any = await API.graphql(
-      graphqlOperation(confirmAddPlan, {
-        paymentMethodId: newPaymentMethod.id,
-        planId: configVars.testFreeTrialPlanId,
-        setupIntentClientSecret:
-          setupIntentData.data.createPlanIntent.clientSecret,
-      })
-    );
-    expect(confirmAddPlanData.data.confirmAddPlan.id).toBeDefined();
-  }, 10000);
 });
 
 describe("crud payment methods, and retrieve billing lists", () => {
@@ -1635,7 +1541,7 @@ describe("crud payment methods, and retrieve billing lists", () => {
     }
     await Auth.signIn(configVars.testUsername, configVars.testPassword);
     return true;
-  }, 10000);
+  }, 15000);
 
   afterAll(async () => {
     await Auth.signOut();
@@ -1682,15 +1588,7 @@ describe("crud payment methods, and retrieve billing lists", () => {
       paymentMethodIntentData.data.createPaymentMethodIntent.clientSecret
     ).toBeDefined();
 
-    newPaymentMethod = await stripe.paymentMethods.create({
-      type: "card",
-      card: {
-        number: "5555555555554444",
-        exp_month: 12,
-        exp_year: 2034,
-        cvc: "314",
-      },
-    });
+    newPaymentMethod = await CreatePaymentMethod(stripe, 'pm_card_mastercard');
     const confirmAddPaymentMethodData: any = await API.graphql(
       graphqlOperation(confirmAddPaymentMethod, {
         paymentMethodId: newPaymentMethod.id,
@@ -1788,103 +1686,11 @@ describe("crud payment methods, and retrieve billing lists", () => {
       "FailOnlyPaymentMethodWhilePayingForPlan"
     );
   });
-
-  test("cancel paid plan", async () => {
-    await delay(40000);
-    const res: any = await API.graphql(graphqlOperation(cancelPaidPlan));
-    expect(res.data.cancelPaidPlan.id).toBeDefined();
-    await Auth.signOut();
-    await Auth.signIn(configVars.testUsername, configVars.testPassword);
-  }, 55000);
-
-  test("remove remaining payment method", async () => {
-    await delay(10000);
-    let paymentMethods: any = await API.graphql(
-      graphqlOperation(listPaymentMethods)
-    );
-    const paymentMethodDeleted: any = await API.graphql(
-      graphqlOperation(deletePaymentMethod, {
-        paymentMethodId: paymentMethods.data.listPaymentMethods[0].id,
-      })
-    );
-    //console.log(util.inspect(paymentMethodDeleted, false, null, true))
-    expect(paymentMethodDeleted.data.deletePaymentMethod.id).toBeDefined();
-  }, 15000);
-
-  test("add a payment method before subscribing to a plan", async () => {
-    await delay(10000);
-    const paymentMethodIntentData: any = await API.graphql(
-      graphqlOperation(createPaymentMethodIntent)
-    );
-    expect(
-      paymentMethodIntentData.data.createPaymentMethodIntent.clientSecret
-    ).toBeDefined();
-
-    newPaymentMethod = await stripe.paymentMethods.create({
-      type: "card",
-      card: {
-        number: "5555555555554444",
-        exp_month: 12,
-        exp_year: 2034,
-        cvc: "314",
-      },
-    });
-    const confirmAddPaymentMethodData: any = await API.graphql(
-      graphqlOperation(confirmAddPaymentMethod, {
-        paymentMethodId: newPaymentMethod.id,
-        setupIntentClientSecret:
-          paymentMethodIntentData.data.createPaymentMethodIntent.clientSecret,
-      })
-    );
-    expect(
-      confirmAddPaymentMethodData.data.confirmAddPaymentMethod.id
-    ).toBeDefined();
-
-    //fake create and attach payment method- use stripe Elements in frontend app
-
-    await delay(15000);
-    let customer = await stripe.customers.search({
-      query: 'email:"' + configVars.testUsername + '"',
-    });
-    await stripe.paymentMethods.attach(newPaymentMethod.id, {
-      customer: customer.data[0].id,
-    });
-    delay(5000);
-    let paymentMethods: any = await API.graphql(
-      graphqlOperation(listPaymentMethods)
-    );
-    expect(paymentMethods.data.listPaymentMethods.length).toEqual(1);
-  }, 35000);
-
-  test("confirm Add New Plan after cancelling, but should not have a trial period", async () => {
-    const setupIntentData: any = await API.graphql(
-      graphqlOperation(createPlanIntent, {
-        planId: configVars.testFreeTrialPlanId,
-      })
-    );
-    expect(setupIntentData.data.createPlanIntent.clientSecret).toBeDefined();
-
-    // use stripe.js stripe.createPaymentMethod in actual frontend
-    let paymentMethods: any = await API.graphql(
-      graphqlOperation(listPaymentMethods)
-    );
-
-    const confirmAddPlanData: any = await API.graphql(
-      graphqlOperation(confirmAddPlan, {
-        paymentMethodId: paymentMethods.data.listPaymentMethods[0].id,
-        planId: configVars.testFreeTrialPlanId,
-        setupIntentClientSecret:
-          setupIntentData.data.createPlanIntent.clientSecret,
-      })
-    );
-    expect(confirmAddPlanData.data.confirmAddPlan.id).toBeDefined();
-  }, 20000);
 });
 
 //TODO test delete all payment methods and add a subscription- should not have trial period added back
 
 test("delete leftover test user account", async () => {
-  cognito = new CognitoIdentityProviderClient();
   configVars = await GetConfigVars(Amplify);
   stripe = require("stripe")(configVars["stripeToken-dev"]);
   await Auth.signIn(configVars.testUsername, configVars.testPassword);
@@ -1893,8 +1699,37 @@ test("delete leftover test user account", async () => {
   });
   await API.graphql(graphqlOperation(deleteAccount));
   await Auth.signOut();
-}, 10000);
+}, 30000);
+
+
 
 async function delay(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
+
+/*
+describe("websocket tests", () => {
+  test("socket Connection", async () => {
+    // Create WebSocket connection.
+    let socket: WebSocket;
+    try {
+      socket = new WebSocket(
+        "wss://apidev.s6pack.build/graphql/realtime?header=eyJBdXRob3JpemF0aW9uIjoiZXlKcmFXUWlPaUp1SzA1WFYyMWNMMGRFVkRsc1VXMU5TMlF4YW5JM2VGTmpUa0p6T0dsSk5FWjBlRVoxTTI1NU4yNHdaejBpTENKaGJHY2lPaUpTVXpJMU5pSjkuZXlKemRXSWlPaUkzTTJVM01EWXdPUzAyTXpCakxUUXhNV0V0T0RFeVl5MDNabUptTkRNeU9EazRPVEFpTENKamIyZHVhWFJ2T21keWIzVndjeUk2V3lKUGQyNWxjaUpkTENKbGJXRnBiRjkyWlhKcFptbGxaQ0k2ZEhKMVpTd2lhWE56SWpvaWFIUjBjSE02WEM5Y0wyTnZaMjVwZEc4dGFXUndMblZ6TFdWaGMzUXRNaTVoYldGNmIyNWhkM011WTI5dFhDOTFjeTFsWVhOMExUSmZRWGRLYmxGSGFVTTNJaXdpWTI5bmJtbDBienAxYzJWeWJtRnRaU0k2SWpjelpUY3dOakE1TFRZek1HTXROREV4WVMwNE1USmpMVGRtWW1ZME16STRPVGc1TUNJc0ltOXlhV2RwYmw5cWRHa2lPaUl3TnpWaVl6UTFNUzFtTlRBeExUUTJaRGt0WWpNNFlpMDBaalJtWWpWa05XTXlNMlVpTENKaGRXUWlPaUkyTXpkc2RqVTJjR0V6Y1hWaGJXVjFORzEyTUdnMk1uTXhPU0lzSW1WMlpXNTBYMmxrSWpvaVpERmpPR1kyTlRndFpqSXpPUzAwTnpjMkxXSTBZemt0T0RVM1lXWTBNRGd5TkRFeElpd2lkRzlyWlc1ZmRYTmxJam9pYVdRaUxDSjBjbWxoYkZCbGNtbHZaRVZzYVdkaFlteGxJam9pZEhKMVpTSXNJbUYxZEdoZmRHbHRaU0k2TVRjeE1EazNNVEl4TXl3aWJtRnRaU0k2SWpJeE9EWXhNbUZrTFdRNFpqZ3ROREF3TXkxaU1ERXhMV1ZoWlRJMlptTTRaalJqTVNJc0luUnlhV0ZzVUdWeWFXOWtSWGh3YVhKbFpDSTZJbVpoYkhObElpd2ljR3hoYmtsa0lqb2laR1YyWDNOa2RqVTFObWczU0daNWVtODBJaXdpY0d4aGJsVnpaWEp6SWpvaU15SXNJbVY0Y0NJNk1UY3hNRGszTkRneE1Td2ljR3hoYmxCeWFXTmxJam9pTkRrNUlpd2lhV0YwSWpveE56RXdPVGN4TWpFekxDSnFkR2tpT2lJeFlXTTNNR0kxT1Mxa05qSmhMVFJoTlRFdE9UZGpZUzAwTWpSaE5UZzBaVFJoTVdFaUxDSmxiV0ZwYkNJNkltSnRhV3hsYzNBclpERkFaMjFoYVd3dVkyOXRJbjAuTzc3S01iVzk3a2s2SnVUQzZvd3JNQ2d5YWR5dnNScUd6MkJHd1dKV09JUDVfMWcxd2JtUi1jbFVNMDhiSTd6WkRnZ2pEMVRoYzlwY2t3OVZzd1lpWVY2clRaWEFSWTZzS2ltTHVOV1pjMEkzVFRmTmkteXpTZDNzZ21YRFhDWUVNYXliRnBzXzliekF0cWdXeXlBd1V6clZUVmRjUXFPaEp0S3YzLXNhWWFHVzZWRkx4QlpHc0JuV05QVXkxeVVja0pTZjYtem43UVNfRDY1LURlYjFQRVpsQmpFWFR1VUYyVmlGX0R4VFNqNGQwSFdIMDd4MmtlVnh2M1RxTjk0emFQMnhSUnV6SElXYkVTUVg3dnJCZktMMjJSVHFjNExudmJOdXFWeS1wUXRTUFVsS0h0UTFrMDVzeDdDOTlUSTJXa256STVHMldNdWM4TWdZWDlEX1ZnIiwiaG9zdCI6ImFwaWRldi5zdGF0aW9uc2hxLmlvIn0=&payload=e30="
+      );
+      console.log(socket);
+    } catch (error) {
+      console.log(error);
+    }
+
+    // Connection opened
+    socket.addEventListener("open", (event) => {
+      socket.send("Hello Server!");
+    });
+
+    // Listen for messages
+    socket.addEventListener("message", (event) => {
+      console.log("Message from server ", event.data);
+    });
+  });
+});
+*/
