@@ -104,7 +104,7 @@ public addAppsyncIdentityPoolRolesAttachment(stackName:string, awsRegion:string,
                 },
                 "Condition": {
                     "StringEquals": {
-                      "cognito-identity.amazonaws.com:aud": awsRegion+":"+identityPoolId
+                      "cognito-identity.amazonaws.com:aud": identityPoolId
                     },
                     "ForAnyValue:StringLike": {
                       "cognito-identity.amazonaws.com:amr": "unauthenticated"
@@ -153,7 +153,7 @@ public addAppsyncIdentityPoolRolesAttachment(stackName:string, awsRegion:string,
                 },
                 "Condition": {
                     "StringEquals": {
-                      "cognito-identity.amazonaws.com:aud": awsRegion+":"+identityPoolId
+                      "cognito-identity.amazonaws.com:aud": identityPoolId
                     },
                     "ForAnyValue:StringLike": {
                       "cognito-identity.amazonaws.com:amr": "authenticated"

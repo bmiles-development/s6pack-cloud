@@ -182,11 +182,7 @@ export async function CognitoCreateTestUser(configVars, cognito) {
       {
         Name: "email",
         Value: configVars.testUsername,
-      },
-      {
-        Name: "name",
-        Value: "e9a9f67c-8a72-498e-a097-c9cb8e922b94",
-      },
+      }
     ],
   };
 
