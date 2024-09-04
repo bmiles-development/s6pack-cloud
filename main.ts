@@ -16,19 +16,19 @@ const app = new App();
 // config yaml files
 const config : any = {}
 const webStacks : any = {}
-const configHostingStackFile = readFileSync('./config.hostingStack.yaml', 'utf8')
+const configHostingStackFile = readFileSync('./.config.hostingStack.yaml', 'utf8')
 config['hostingStack'] = parse(configHostingStackFile)
 
-const configDataStackFile = readFileSync('./config.dataStack.yaml', 'utf8')
+const configDataStackFile = readFileSync('./.config.dataStack.yaml', 'utf8')
 config['dataStack'] = parse(configDataStackFile)
 
-const configWebStackFile = readFileSync('./config.webStack.yaml', 'utf8')
+const configWebStackFile = readFileSync('./.config.webStack.yaml', 'utf8')
 const webStackConfig = parse(configWebStackFile)
 config['webStackGreen'] = webStackConfig['webStackGreen']
 config['webStackBlue'] = webStackConfig['webStackBlue']
 config['webStackDev'] = webStackConfig['webStackDev']
 
-const configblueGreenToggleStackFile = readFileSync('./config.blueGreenToggleStack.yaml', 'utf8')
+const configblueGreenToggleStackFile = readFileSync('./.config.blueGreenToggleStack.yaml', 'utf8')
 config['blueGreenToggleStack'] = parse(configblueGreenToggleStackFile)
 
 // set up bucketname for remote TFState files managed on S3

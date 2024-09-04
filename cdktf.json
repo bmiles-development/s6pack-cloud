@@ -11,5 +11,6 @@
     "@aws-cdk/aws-s3:serverAccessLogsUseBucketPolicy": true,
     "excludeStackIdFromLogicalIds": "true",
     "allowSepCharsInLogicalIds": "true"
-  }
+  },
+  "projectId": "1db3f8f6-ae4c-4074-afd8-f9a827b03956"
 }
