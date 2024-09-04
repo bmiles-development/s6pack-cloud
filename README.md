@@ -15,13 +15,15 @@ Full deployment time will take roughly an hour with manual steps between (requir
  1) clone the project ```git clone git@github.com:bmiles-development/s6pack-cloud.git``` and cd into the project diractory.
  2) run ```npm update```
  3) Install AWS, Stripe and dependant CDKTF providers. run ```cdktf get``` to install the providers.
- 4) run ```cdktf deploy tfStateBackupStack --auto-approve``` this will setup the state store on S3 instead of on your local machine. This is for a bunch of good reasons, including better security and avoiding syncing issues when developing with a team.
- 5) open the file ./stacks/tfStateBackup/TFStateBackupStack.ts and remove the open and closing comment tags from this block of code: 
+ 4) Copy and rename the following files:
     ```
-    // import (S3Backend) from "cdktf" 
+		.config.blueGreenToggleStack.yaml.template -> .config.blueGreenToggleStack.yaml
+		.config.dataStack.yaml.template -> .config.dataStack.yaml
+		.config.hostingStack.yaml.template -> .config.hostingStack.yaml
+		.config.webStack.yaml.template -> .config.webStack.yaml
     ```
-
-    and also this one:
+ 5) run ```cdktf deploy tfStateBackupStack --auto-approve``` this stack's purpose is to setup the Terraform state store on S3 instead of on your local machine. This is for a bunch of good reasons, including better security and avoiding syncing issues when developing with a team.
+ 6) In you ```.config.hostingStack.yaml``` file, change the ```useS3TfState``` value to true. 
     ```
     /*
     new S3Backend(this, {
@@ -30,10 +32,10 @@ Full deployment time will take roughly an hour with manual steps between (requir
       region: region
     })*/
     ```
- 6) run ```cd cdktf.out/stacks/tfStateBackupStack && terraform init -migrate-state``` then answer ```yes``` at the prompt
- 7) run ```cd ../../../```
- 8) run ```cdktf deploy tfStateBackupStack --auto-approve```. This is necessary to avoid the chicken-or-the-egg problen of storing the tfStateBackupStack.tfState files on the tfStateBackupStack itself.
- 9) Create AWS [SSM Parameter Store] ```SecureString``` Parameters(https://us-east-1.console.aws.amazon.com/systems-manager/parameters) for each of the following parameters:
+ 7) run ```cd cdktf.out/stacks/tfStateBackupStack && terraform init -migrate-state``` then answer ```yes``` at the prompt
+ 8) run ```cd ../../../```
+ 9) run ```cdktf deploy tfStateBackupStack --auto-approve```. This is necessary to work around the chicken-or-the-egg problem of storing the tfStateBackupStack.tfState files on the tfStateBackupStack itself.
+ 10) Create AWS [SSM Parameter Store] ```SecureString``` Parameters(https://us-east-1.console.aws.amazon.com/systems-manager/parameters) for each of the following parameters:
     
     Dummy email address if response is not necessary
     ```
@@ -71,7 +73,7 @@ Full deployment time will take roughly an hour with manual steps between (requir
     /global/parameters/testFreeTrialPlanId = "business_plan" 
     
     ```
- 10) create emplty values for these parameters for now, we will poplulate them later once they have been created:
+ 11) create emplty values for these parameters for now, we will poplulate them later once they have been created:
         ```
         /global/parameters/stripeToken-dev = " " 
         /global/parameters/stripeToken-live = " "
@@ -81,14 +83,14 @@ Full deployment time will take roughly an hour with manual steps between (requir
         /global/parameters/testCognitoClientId = " "
         /global/parameters/testIdentityPoolId = " "
         ```
- 11) run: ```cdktf deploy hostingStack --auto-approve``` follow DNS instructions in the TerraformOutput under "rout53HostedZone". You will see it at the end of the cli output in the terminal when the deployment has successfully complete. (copy the Hosted Zone SN records into your domain name host DNS, if you do not do this the next stack deployment will fail). 
+ 12) run: ```cdktf deploy hostingStack --auto-approve``` follow DNS instructions in the TerraformOutput under "rout53HostedZone". You will see it at the end of the cli output in the terminal when the deployment has successfully complete. (copy the Hosted Zone SN records into your domain name host DNS, if you do not do this the next stack deployment will fail). 
     
         ** You may get an error regarding S3 ACL permissions Just try to deploy the hosting stack again after a minute or two since  deployment timing on AWS can be out of sync. 
 
         ** If you get an error "from Amazon SES when attempting to send email", you may have Amazon SES identity status verification pending. This verification may take up to an hour. Check verification status here (verify your region in the url): https://us-west-1.console.aws.amazon.com/ses/home?region=us-west-1#/identities
- 12) Before deploying the dataStacks, you need to complete the business profile in the [Stripe Dashboard](https://dashboard.stripe.com/). Otherwise, the terraform commands will not have access to the live site, only the sandbox site and you will get errors. The only way to fix the errors is to cd into the cdktf.out/stacks/{your stack in question} and run these commands to pull, edit the state file directly (remove the json block in question) and push. See: https://developer.hashicorp.com/terraform/cli/commands/state/push
- 13) run ```cdktf deploy dataStackDev --auto-approve --ignore-missing-stack-dependencies```
- 14) After deployment has completed, populate the following Parameter Store parameters from step 10 using the TerraformOutput displayed in the terminal:
+ 13) Before deploying the dataStacks, you need to complete the business profile in the [Stripe Dashboard](https://dashboard.stripe.com/). Otherwise, the terraform commands will not have access to the live site, only the sandbox site and you will get errors. The only way to fix the errors is to cd into the cdktf.out/stacks/{your stack in question} and run these commands to pull, edit the state file directly (remove the json block in question) and push. See: https://developer.hashicorp.com/terraform/cli/commands/state/push
+ 14) run ```cdktf deploy dataStackDev --auto-approve --ignore-missing-stack-dependencies```
+ 15) After deployment has completed, populate the following Parameter Store parameters from step 10 using the TerraformOutput displayed in the terminal:
     The following will be listed under the dataStackDev TerraformOutput:
         In the terminal, look for dataStackDev Outputs: dataStackDev_CognitoClientId_XXXXXX = "value-to-copy-here" and copy the value to this parameter:
         ```

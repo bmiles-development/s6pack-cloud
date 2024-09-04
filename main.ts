@@ -39,7 +39,8 @@ new TFStateBackupStack(
   app,
   "tfStateBackupStack",
   backendStateS3BucketName,
-  config['hostingStack'].defaultRegion
+  config['hostingStack'].defaultRegion,
+  config['hostingStack'].useS3TfState
 )
 
 // HostingStack
