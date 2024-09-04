@@ -1,5 +1,5 @@
 import {Construct} from "constructs"
-import {S3Backend} from "cdktf" 
+//import {S3Backend} from "cdktf" 
 import {TerraformStack} from "cdktf"
 import { AwsProvider } from "@cdktf/provider-aws/lib/provider"
 import { Dynamodb as TFStateDynamoDb } from './infrastructure/aws/dynamodb'
@@ -18,12 +18,12 @@ export class TFStateBackupStack extends TerraformStack {
     super(scope, name);
     new AwsProvider(this, "aws", { region: region });
 
-    
+    /*
     new S3Backend(this, {
       bucket: backendStateS3BucketName,
       key: name,
       region: region
-    })
+    })*/
 
     this._s3Resource = new S3(this, "tfStateBackupS3", backendStateS3BucketName)
 
