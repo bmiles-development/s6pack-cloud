@@ -1,1 +1,1 @@
-currentLiveAppStackName: webStackDev #change this to toggle between live blue/green stack
+currentLiveAppStackName: webStackBlue #change this to toggle between live blue/green stack
