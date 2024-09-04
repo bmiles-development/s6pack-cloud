@@ -23,15 +23,7 @@ Full deployment time will take roughly an hour with manual steps between (requir
 		.config.webStack.yaml.template -> .config.webStack.yaml
     ```
  5) run ```cdktf deploy tfStateBackupStack --auto-approve``` this stack's purpose is to setup the Terraform state store on S3 instead of on your local machine. This is for a bunch of good reasons, including better security and avoiding syncing issues when developing with a team.
- 6) In you ```.config.hostingStack.yaml``` file, change the ```useS3TfState``` value to true. 
-    ```
-    /*
-    new S3Backend(this, {
-      bucket: backendStateS3BucketName,
-      key: name,
-      region: region
-    })*/
-    ```
+ 6) In your ```.config.hostingStack.yaml``` file, change the ```useS3TfState``` value to true. 
  7) run ```cd cdktf.out/stacks/tfStateBackupStack && terraform init -migrate-state``` then answer ```yes``` at the prompt
  8) run ```cd ../../../```
  9) run ```cdktf deploy tfStateBackupStack --auto-approve```. This is necessary to work around the chicken-or-the-egg problem of storing the tfStateBackupStack.tfState files on the tfStateBackupStack itself.
