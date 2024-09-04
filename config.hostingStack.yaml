@@ -7,5 +7,5 @@ testGraphQlEndpoint: https://apidev.s6pack.build/graphql
 defaultRegion: us-west-1
 logBucketNamePrefix: s6pack-build
 logRetentionPeriod: 90 #days
-sesEmailIdentityDomain: mail.bmilesdev.com
-sesEmailIdentityAddress: brandon@bmilesdev.com
+sesEmailIdentityAddress: yourValidEmail@email.com
+sesEmailIdentityDomain: mail.valid.com

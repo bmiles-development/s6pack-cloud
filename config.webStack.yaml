@@ -3,7 +3,6 @@ webStackDev:
   subdomainName: dev #lowercase only
   appsyncDomainName: apidev.s6pack.build
   s3WebsiteDomainName: dev.s6pack.build
-  lambdaUrlAccessUuid: 0190d7f2-6064-7f26-a13c-902f2d9c9f61
   sfn:
     logLevel: ALL
     includeExecutionData: true
@@ -16,7 +15,6 @@ webStackBlue:
   subdomainName: blue #lowercase only
   appsyncDomainName: apiblue.s6pack.build
   s3WebsiteDomainName: blue.s6pack.build
-  lambdaUrlAccessUuid: 0190d7f2-c2a0-77b8-8d78-3e6d4b25d4c0
   sfn:
     logLevel: ALL
     includeExecutionData: true
@@ -29,7 +27,6 @@ webStackGreen:
   subdomainName: green #lowercase only
   appsyncDomainName: apigreen.s6pack.build
   s3WebsiteDomainName: green.s6pack.build
-  lambdaUrlAccessUuid: 0190d7f2-e061-7e58-b397-145d2213c297
   sfn:
     logLevel: ALL
     includeExecutionData: true

@@ -55,7 +55,8 @@ export class WebStack extends TerraformStack {
         backendStateS3BucketName:string, 
         stripeToken:string, 
         contactUsEmailAddress:string, 
-        freePlanDBKey:string
+        freePlanDBKey:string,
+        cloudFrontLambdaUrlAccessUuid:string
       //  stripeWebhooksIpList:string[] = [] 
     ){
       super(scope, stackName);
@@ -113,7 +114,7 @@ export class WebStack extends TerraformStack {
       iamResource.addAppsyncAccessPolicyToLambdaRole(stackName, region, accountId, this._appsyncResource.graphqlApi.id, ['cancelPlanPeriodEndedWebhook']);
       envVars =  lambdaResource.defaultEnvVars
       envVars.GRAPHQL_API_ENDPOINT = 'https://'+config.appsyncDomainName+'/graphql';
-      envVars.LAMBDA_URL_ACCESS_UUID = config.lambdaUrlAccessUuid
+      envVars.LAMBDA_URL_ACCESS_UUID = cloudFrontLambdaUrlAccessUuid
       const queryAppsyncGatewayFunctionArn = lambdaResource.CreateLambdaNodeJsFunction("queryAppsyncGatewayFunction", join(stackPath,"interface", "gateway-lambdaUrl"), envVars, lambdaLayersArns, iamResource.roles['webhookGatewayLambda'].arn)
       const cloudfrontViewerRequestIpAllowFunctionArn = lambdaResource.CreateEdgeLambdaNodeJsFunction(awsUsEast1Provider, "cloudfrontViewerRequestIpAllowFunction", join(stackPath,"interface", "gateway-lambdaUrl"), [], iamResource.roles['lambdaServiceRole'].arn)
 
@@ -131,7 +132,7 @@ export class WebStack extends TerraformStack {
         gatewayFunctionUrlResource.urlId, 
         hostingStack.s3Resource.s3CloudfrontLoggingBucket.bucketDomainName, 
         [this._webhookDomainName],
-        config.lambdaUrlAccessUuid,
+        cloudFrontLambdaUrlAccessUuid,
         cloudfrontViewerRequestIpAllowFunctionArn
       )
       
