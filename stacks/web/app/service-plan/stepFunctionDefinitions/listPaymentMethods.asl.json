@@ -109,8 +109,19 @@
           "ProcessorConfig": {
             "Mode": "INLINE"
           },
-          "StartAt": "CheckDefaultPaymentMethod",
+          "StartAt": "DefaultPaymentIdIsNull",
           "States": {
+            "DefaultPaymentIdIsNull": {
+              "Type": "Choice",
+              "Choices": [
+                {
+                  "Variable": "$.defaultPaymentId",
+                  "IsNull": true,
+                  "Next": "DefaultPaymentMethodIsFalse"
+                }
+              ],
+              "Default": "CheckDefaultPaymentMethod"
+            },
             "CheckDefaultPaymentMethod": {
               "Type": "Choice",
               "Choices": [

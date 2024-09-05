@@ -108,11 +108,3 @@ cognito:
     stringAttributeConstraints:
       maxLength: '64'
       minLength: '10'
-  - name: tenant_name  ## not used- delete next new deployment
-    attributeDataType: String
-    developerOnlyAttribute: false
-    mutable: true
-    required: false
-    stringAttributeConstraints:
-      maxLength: '64'
-      minLength: '1'
