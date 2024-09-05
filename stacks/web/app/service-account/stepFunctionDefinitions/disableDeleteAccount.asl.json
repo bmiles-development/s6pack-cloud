@@ -20,7 +20,8 @@
         "Type": "Pass",
         "End": true,
         "Parameters": {
-          "success": "true"
+          "id": "$.identity.claims.name",
+          "deleteAccountFlag": false
         }
       }
     }  

@@ -146,16 +146,6 @@ describe("basic authorized calls using GRAPHQL_AUTH_MODE.AMAZON_COGNITO_USER_POO
     });
     expect(messageResults.data.contactUs).toBeDefined();
   });
-
-  test("delete userpool test user account", async () => {
-    await API.graphql({
-      query: enableDeleteAccount,
-    });
-    const deleteAccountData: any = await API.graphql(
-      graphqlOperation(deleteAccount)
-    );
-    expect(deleteAccountData.data.deleteAccount.success).toBeDefined();
-  });
 });
 
 describe("create user, upgrade plan to free plan, delete account", () => {
@@ -218,7 +208,7 @@ describe("create user, upgrade plan to free plan, delete account", () => {
     );
     expect(confirmAddPlanData.data.confirmAddPlan.id).toBeDefined();
   }, 60000);
-/*
+
   test("add standard user", async () => {
     await Auth.signOut();
     await Auth.signIn(configVars.testUsername, configVars.testPassword);
@@ -324,14 +314,14 @@ describe("create user, upgrade plan to free plan, delete account", () => {
     const response: any = await API.graphql({
       query: enableDeleteAccount,
     });
-    expect(response.data.enableDeleteAccount.success).toBeTruthy();
+    expect(response.data.enableDeleteAccount.deleteAccountFlag).toBeTruthy();
   });
 
   test("remove deleteAccountFlag", async () => {
     const response: any = await API.graphql({
       query: disableDeleteAccount,
     });
-    expect(response.data.disableDeleteAccount.success).toBeTruthy();
+    expect(response.data.disableDeleteAccount.deleteAccountFlag).toBeFalsy();
   });
 
   test("delete user account", async () => {
@@ -343,7 +333,6 @@ describe("create user, upgrade plan to free plan, delete account", () => {
     );
     expect(deleteAccountData.data.deleteAccount.success).toBeDefined();
   });
-  */
 });
 
 describe("create new user, then create Admin User and test functionality, then change to Standard User and test its functionality", () => {

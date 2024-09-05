@@ -78,7 +78,8 @@ export const deactivateUser = /* GraphQL */ `
 export const enableDeleteAccount = /* GraphQL */ `
     mutation EnableDeleteAccount {
         enableDeleteAccount{
-            success
+            id,
+            deleteAccountFlag
         }
     }
 `;
@@ -86,7 +87,8 @@ export const enableDeleteAccount = /* GraphQL */ `
 export const disableDeleteAccount = /* GraphQL */ `
     mutation DisableDeleteAccount {
         disableDeleteAccount{
-            success
+            id,
+            deleteAccountFlag
         }
     }
 `;

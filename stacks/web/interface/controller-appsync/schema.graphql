@@ -57,10 +57,10 @@ type Mutation {
 	deleteAccount: SuccessResult
 		@aws_cognito_user_pools(cognito_groups: ["Free","Owner"])
 		# Deletes the entire Account, Users, Plan information, everything. Must first call the enableDeleteAccount mutation to unlock this action.
-	enableDeleteAccount: SuccessResult
+	enableDeleteAccount: Tenant
 		@aws_cognito_user_pools(cognito_groups: ["Free","Owner"])
 		# Enables the deleteAccout mutation.
-	disableDeleteAccount: SuccessResult
+	disableDeleteAccount: Tenant
 		@aws_cognito_user_pools(cognito_groups: ["Free","Owner"])
 		# Disables the deleteAccout mutation.
 	contactUs(input: ContactUsInput!): MessageResult #optional email for public form
@@ -241,6 +241,7 @@ type Tenant @aws_iam @aws_cognito_user_pools(cognito_groups: ["Free","Owner","Ad
 	users: [User]
 	trialPeriod: TenantTrialPeriod
 	cancelPlanAt: Int
+	deleteAccountFlag: Boolean
 }
 
 type TenantTrialPeriod @aws_iam @aws_cognito_user_pools(cognito_groups: ["Free","Owner","Admin","User"]) {

@@ -78,11 +78,11 @@ export async function CheckIfTestUserExists(configVars, cognito) {
 
 export async function GetConfigVars(Amplify) {
   let configVars: any;
-  const yamlFilePath = path.join(pwd, "..", "config.hostingStack.yaml");
+  const yamlFilePath = path.join(pwd, "..", ".config.hostingStack.yaml");
   try {
     configVars = yaml.load(fs.readFileSync(yamlFilePath, "utf8"));
   } catch (e) {
-    throw new Error(`Unable to load config.hostingStack.yaml: ${e.message}`);
+    throw new Error(`Unable to load .config.hostingStack.yaml: ${e.message}`);
   }
 
   const ssm = new SSMClient({ region: configVars.defaultRegion });
