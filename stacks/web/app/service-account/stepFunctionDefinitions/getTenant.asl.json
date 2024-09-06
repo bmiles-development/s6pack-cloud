@@ -62,7 +62,7 @@
               "Next": "CreateNullCancelPlanAtVariable"
           }
           ],
-          "Default": "PassTenant"
+          "Default": "CheckDeleteAccountFlagExists"
       },
       "CreateNullCancelPlanAtVariable": {
           "Type": "Pass",
@@ -70,8 +70,27 @@
             "N": null
           },
           "ResultPath": "$.tenant.Item.CancelPlanAt",
-          "Next": "PassTenant"
+          "Next": "CheckDeleteAccountFlagExists"
       },
+      "CheckDeleteAccountFlagExists": {
+        "Type": "Choice",
+        "Choices": [
+        {
+            "Variable": "$.tenant.Item.DeleteAccountFlag.BOOL",
+            "IsPresent": false,
+            "Next": "CreateFalseDeleteAccountFlagVariable"
+        }
+        ],
+        "Default": "PassTenant"
+    },
+    "CreateFalseDeleteAccountFlagVariable": {
+        "Type": "Pass",
+        "Parameters": {
+          "BOOL": false
+        },
+        "ResultPath": "$.tenant.Item.DeleteAccountFlag",
+        "Next": "PassTenant"
+    },
       "PassTenant" : {
         "Type": "Pass",
         "End": true,
@@ -80,7 +99,8 @@
             "planId.$": "$.tenant.Item.PlanId.S",
             "cancelPlanAt.$": "$.tenant.Item.CancelPlanAt.N",
             "trialPeriodDays.$": "$.tenant.Item.TrialPeriodDays.N",
-            "trialPeriodTimestamp.$": "$.tenant.Item.TrialPeriodTimestamp.N"
+            "trialPeriodTimestamp.$": "$.tenant.Item.TrialPeriodTimestamp.N",
+            "deleteAccountFlag.$": "$.tenant.Item.DeleteAccountFlag.BOOL"
         }
       }
     }
