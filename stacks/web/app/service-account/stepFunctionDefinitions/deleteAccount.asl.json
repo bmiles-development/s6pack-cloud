@@ -208,9 +208,9 @@
             }
           }
         },
-        "Next" : "Success"
+        "Next" : "Complete"
       },
-      "Success": {
+      "Complete": {
         "Type": "Pass",
         "End": true,
         "Parameters": {

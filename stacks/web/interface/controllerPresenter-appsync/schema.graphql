@@ -132,8 +132,8 @@ type Subscription {
 		@aws_cognito_user_pools(cognito_groups: ["Free","Owner","Admin","User"])
 		@aws_subscribe(mutations: ["cancelPlanPeriodEndedWebhook"])
 	# GraphQL will log out users and redirect to the login page when the account is deleted.
-	accountDeleted(tenantId: String!): Tenant
-		@aws_cognito_user_pools(cognito_groups: ["Free","Owner"])
+	accountDeleted(id: String!): Tenant
+		@aws_cognito_user_pools(cognito_groups: ["Free","Owner","Admin","User"])
 		@aws_subscribe(mutations: ["deleteAccount"])
 }
 

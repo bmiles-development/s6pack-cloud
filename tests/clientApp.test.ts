@@ -320,23 +320,20 @@ describe("create user, upgrade plan to free plan, delete account", () => {
 
   test("delete user account and test subscription", async () => {
     const session: any = await Auth.currentSession();
-    let tenantId = session.idToken.payload.name;
-    console.log("tenantId: " + tenantId);
+    let id = session.idToken.payload.name;
+
     await API.graphql({
       query: enableDeleteAccount,
     });
 
-//   will this subscription not work for the owner because the globalsignout in deleteAccount will sign out the user from all subscriptions?
-/*
     let deleteAccountSub = await configVars.apolloClient
       .subscribe({
         query: gql(accountDeleted),
-        variables: { tenantId: tenantId },
+        variables: { id: id },
       })
       .subscribe({
         next(data) {
           console.log("...deleteAccount accountDeleted fired.");
-          console.log(data);
           expect(data.data.accountDeleted.id).toBeDefined();
           deleteAccountSub.unsubscribe();
           return;
@@ -347,7 +344,7 @@ describe("create user, upgrade plan to free plan, delete account", () => {
       });
     expect(deleteAccountSub._state).toEqual("ready");
     console.log("waiting for deleteAccount accountDeleted to fire...");
-*/
+
     const deleteAccountData: any = await API.graphql(
       graphqlOperation(deleteAccount)
     );

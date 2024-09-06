@@ -526,7 +526,7 @@ export class AppSyncGraphqlController extends Construct {
       type: "Subscription",
       field: "accountDeleted",
       datasource: this.DATASOURCES.NONE,
-      requestTemplate: Fn.templatefile(join(filePath,"genericRequestResolverUsingTenantId-subscription.vtl"),{}),
+      requestTemplate: Fn.templatefile(join(filePath,"genericRequestResolver-subscription.vtl"),{}),
       responseTemplate: Fn.file(join(filePath,"../controllerPresenter-appsync/genericResponseResolver-subscription.vtl"))
     }
   }
