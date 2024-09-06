@@ -54,7 +54,7 @@ type Mutation {
 	confirmAddPaymentMethod(paymentMethodId: String!, setupIntentClientSecret: String!): PaymentMethod
 		@aws_cognito_user_pools(cognito_groups: ["Free","Owner"])
 		# Adds an additional payment method to an account.
-	deleteAccount: SuccessResult
+	deleteAccount: Tenant
 		@aws_cognito_user_pools(cognito_groups: ["Free","Owner"])
 		# Deletes the entire Account, Users, Plan information, everything. Must first call the enableDeleteAccount mutation to unlock this action.
 	enableDeleteAccount: Tenant
@@ -131,6 +131,10 @@ type Subscription {
 	planCanceled(id: String!): Tenant
 		@aws_cognito_user_pools(cognito_groups: ["Free","Owner","Admin","User"])
 		@aws_subscribe(mutations: ["cancelPlanPeriodEndedWebhook"])
+	# GraphQL will log out users and redirect to the login page when the account is deleted.
+	accountDeleted(tenantId: String!): Tenant
+		@aws_cognito_user_pools(cognito_groups: ["Free","Owner"])
+		@aws_subscribe(mutations: ["deleteAccount"])
 }
 
 input ContactUsInput @aws_iam @aws_cognito_user_pools(cognito_groups: ["Free","Owner","Admin","User"]) {
@@ -273,9 +277,4 @@ type MessageResult @aws_iam @aws_cognito_user_pools(cognito_groups: ["Free","Own
 	# Generic response object for use with mutations that require more information.
 	messageType: String!
 	message: String!
-}
-
-type SuccessResult {
-	# Generic success response object.
-	success: Boolean
 }

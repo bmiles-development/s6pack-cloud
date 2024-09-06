@@ -14,3 +14,11 @@ export const planCanceled = /* GraphQL */ `
     }
 `;
 
+export const accountDeleted = /* GraphQL */ `
+    subscription accountDeleted($tenantId: String!) {
+        accountDeleted(tenantId: $tenantId) {
+            id
+        }
+    }
+`;
+

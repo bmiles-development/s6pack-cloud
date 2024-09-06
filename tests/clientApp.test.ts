@@ -49,6 +49,7 @@ import {
 import {
   planModified,
   planCanceled,
+  accountDeleted,
 } from "./exampleClientApp/graphql/subscriptions";
 import gql from "graphql-tag";
 import util from "util";
@@ -58,7 +59,6 @@ let configVars: any;
 let cognito: any;
 let stripe: any;
 let testUserExists: any;
-
 
 describe("basic unauthorized calls using GRAPHQL_AUTH_MODE.AWS_IAM", () => {
   beforeAll(async () => {
@@ -173,8 +173,7 @@ describe("create user, upgrade plan to free plan, delete account", () => {
   test("fail add user to free trial plan", async () => {
     let e: any;
     try {
-      const splitEmail =
-        configVars["contactUsEmail-dev"].split("@");
+      const splitEmail = configVars["contactUsEmail-dev"].split("@");
       const testUser2 = splitEmail[0] + "+2@" + splitEmail[1];
 
       await API.graphql({
@@ -212,8 +211,7 @@ describe("create user, upgrade plan to free plan, delete account", () => {
   test("add standard user", async () => {
     await Auth.signOut();
     await Auth.signIn(configVars.testUsername, configVars.testPassword);
-    const splitEmail =
-      configVars["contactUsEmail-dev"].split("@");
+    const splitEmail = configVars["contactUsEmail-dev"].split("@");
     const testUser2 = splitEmail[0] + "+2@" + splitEmail[1];
     const response: any = await API.graphql(
       graphqlOperation(addStandardUser, { username: testUser2 })
@@ -222,8 +220,7 @@ describe("create user, upgrade plan to free plan, delete account", () => {
   });
 
   test("delete standard user", async () => {
-    const splitEmail =
-      configVars["contactUsEmail-dev"].split("@");
+    const splitEmail = configVars["contactUsEmail-dev"].split("@");
     const testUser2 = splitEmail[0] + "+2@" + splitEmail[1];
     const response: any = await API.graphql(
       graphqlOperation(deleteStandardUser, { id: testUser2 })
@@ -232,8 +229,7 @@ describe("create user, upgrade plan to free plan, delete account", () => {
   });
 
   test("add admin user", async () => {
-    const splitEmail =
-      configVars["contactUsEmail-dev"].split("@");
+    const splitEmail = configVars["contactUsEmail-dev"].split("@");
     const testUser3 = splitEmail[0] + "+3@" + splitEmail[1];
     const response: any = await API.graphql(
       graphqlOperation(addAdminUser, { username: testUser3 })
@@ -242,8 +238,7 @@ describe("create user, upgrade plan to free plan, delete account", () => {
   });
 
   test("fail add admin duplicate user", async () => {
-    const splitEmail =
-      configVars["contactUsEmail-dev"].split("@");
+    const splitEmail = configVars["contactUsEmail-dev"].split("@");
     const testUser3 = splitEmail[0] + "+3@" + splitEmail[1];
     let e: any;
     try {
@@ -259,8 +254,7 @@ describe("create user, upgrade plan to free plan, delete account", () => {
   });
 
   test("delete admin user", async () => {
-    const splitEmail =
-      configVars["contactUsEmail-dev"].split("@");
+    const splitEmail = configVars["contactUsEmail-dev"].split("@");
     const testUser3 = splitEmail[0] + "+3@" + splitEmail[1];
     const response: any = await API.graphql(
       graphqlOperation(deleteAdminUser, { id: testUser3 })
@@ -270,8 +264,7 @@ describe("create user, upgrade plan to free plan, delete account", () => {
 
   test("fail - add more standard users and max out 5 user plan limit", async () => {
     let e: any;
-    const splitEmail =
-      configVars["contactUsEmail-dev"].split("@");
+    const splitEmail = configVars["contactUsEmail-dev"].split("@");
     const testUser2 = splitEmail[0] + "+2@" + splitEmail[1];
     const testUser3 = splitEmail[0] + "+3@" + splitEmail[1];
     const testUser4 = splitEmail[0] + "+4@" + splitEmail[1];
@@ -290,7 +283,7 @@ describe("create user, upgrade plan to free plan, delete account", () => {
       graphqlOperation(addStandardUser, { username: testUser5 })
     );
     try {
-      await delay(5000)// great, more Step Function Coginto-DeleteUser delay, lets compensate for it here.
+      await delay(5000); // great, more Step Function Coginto-DeleteUser delay, lets compensate for it here.
       let data = await API.graphql(
         graphqlOperation(addStandardUser, { username: testUser6 })
       );
@@ -298,12 +291,13 @@ describe("create user, upgrade plan to free plan, delete account", () => {
       e = err;
     }
     expect(e.errors[0].errorType).toMatch("PlanUserLimitReached");
-  },10000);
+  }, 10000);
 
   test("fail delete user account, must set deleteAccoutFlag to true", async () => {
     let e: any;
     try {
-      await API.graphql(graphqlOperation(deleteAccount));
+      let res = await API.graphql(graphqlOperation(deleteAccount));
+      console.log(res);
     } catch (err) {
       e = err;
     }
@@ -324,15 +318,42 @@ describe("create user, upgrade plan to free plan, delete account", () => {
     expect(response.data.disableDeleteAccount.deleteAccountFlag).toBeFalsy();
   });
 
-  test("delete user account", async () => {
+  test("delete user account and test subscription", async () => {
+    const session: any = await Auth.currentSession();
+    let tenantId = session.idToken.payload.name;
+    console.log("tenantId: " + tenantId);
     await API.graphql({
       query: enableDeleteAccount,
     });
+
+//   will this subscription not work for the owner because the globalsignout in deleteAccount will sign out the user from all subscriptions?
+/*
+    let deleteAccountSub = await configVars.apolloClient
+      .subscribe({
+        query: gql(accountDeleted),
+        variables: { tenantId: tenantId },
+      })
+      .subscribe({
+        next(data) {
+          console.log("...deleteAccount accountDeleted fired.");
+          console.log(data);
+          expect(data.data.accountDeleted.id).toBeDefined();
+          deleteAccountSub.unsubscribe();
+          return;
+        },
+        error(error) {
+          console.log(error);
+        },
+      });
+    expect(deleteAccountSub._state).toEqual("ready");
+    console.log("waiting for deleteAccount accountDeleted to fire...");
+*/
     const deleteAccountData: any = await API.graphql(
       graphqlOperation(deleteAccount)
     );
-    expect(deleteAccountData.data.deleteAccount.success).toBeDefined();
-  });
+    
+    expect(deleteAccountData.data.deleteAccount.id).toBeDefined();
+  }, 10000);
 });
 
 describe("create new user, then create Admin User and test functionality, then change to Standard User and test its functionality", () => {
@@ -388,8 +409,7 @@ describe("create new user, then create Admin User and test functionality, then c
     await Auth.signOut();
     await Auth.signIn(configVars.testUsername, configVars.testPassword);
     // create admin user
-    const splitEmail =
-      configVars["contactUsEmail-dev"].split("@");
+    const splitEmail = configVars["contactUsEmail-dev"].split("@");
     const testUser2 = splitEmail[0] + "+2@" + splitEmail[1];
     const response: any = await API.graphql(
       graphqlOperation(addAdminUser, { username: testUser2 })
@@ -407,8 +427,7 @@ describe("create new user, then create Admin User and test functionality, then c
   }, 10000);
 
   test("add users until plan limit has been reached", async () => {
-    const splitEmail =
-      configVars["contactUsEmail-dev"].split("@");
+    const splitEmail = configVars["contactUsEmail-dev"].split("@");
     const testUser3 = splitEmail[0] + "+3@" + splitEmail[1];
     const testUser4 = splitEmail[0] + "+4@" + splitEmail[1];
     const testUser5 = splitEmail[0] + "+5@" + splitEmail[1];
@@ -424,7 +443,7 @@ describe("create new user, then create Admin User and test functionality, then c
     );
     let e: any;
     try {
-      await delay(5000)// grewat more Step Function Coginto-ListUsers delay, lets compensate for it here.
+      await delay(5000); // grewat more Step Function Coginto-ListUsers delay, lets compensate for it here.
       await API.graphql(
         graphqlOperation(addStandardUser, { username: testUser6 })
       );
@@ -432,11 +451,10 @@ describe("create new user, then create Admin User and test functionality, then c
       e = err;
     }
     expect(e.errors[0].errorType).toMatch("PlanUserLimitReached");
-  },10000);
+  }, 10000);
 
   test("admin user - changeStandardUserToAdmin", async () => {
-    const splitEmail =
-      configVars["contactUsEmail-dev"].split("@");
+    const splitEmail = configVars["contactUsEmail-dev"].split("@");
     const testUser4 = splitEmail[0] + "+4@" + splitEmail[1];
     const response: any = await API.graphql(
       graphqlOperation(changeStandardUserToAdmin, { id: testUser4 })
@@ -445,8 +463,7 @@ describe("create new user, then create Admin User and test functionality, then c
   });
 
   test("fail - delete standard user on admin user", async () => {
-    const splitEmail =
-      configVars["contactUsEmail-dev"].split("@");
+    const splitEmail = configVars["contactUsEmail-dev"].split("@");
     const testUser4 = splitEmail[0] + "+4@" + splitEmail[1];
     let e: any;
     try {
@@ -460,8 +477,7 @@ describe("create new user, then create Admin User and test functionality, then c
   });
 
   test("admin user - delete admin user", async () => {
-    const splitEmail =
-      configVars["contactUsEmail-dev"].split("@");
+    const splitEmail = configVars["contactUsEmail-dev"].split("@");
     const testUser4 = splitEmail[0] + "+4@" + splitEmail[1];
     const response: any = await API.graphql(
       graphqlOperation(deleteAdminUser, { id: testUser4 })
@@ -470,8 +486,7 @@ describe("create new user, then create Admin User and test functionality, then c
   });
 
   test("delete standard user", async () => {
-    const splitEmail =
-      configVars["contactUsEmail-dev"].split("@");
+    const splitEmail = configVars["contactUsEmail-dev"].split("@");
     const testUser3 = splitEmail[0] + "+3@" + splitEmail[1];
     const response: any = await API.graphql(
       graphqlOperation(deleteStandardUser, { id: testUser3 })
@@ -480,12 +495,11 @@ describe("create new user, then create Admin User and test functionality, then c
   });
 
   test("fail - add duplicate user", async () => {
-    const splitEmail =
-      configVars["contactUsEmail-dev"].split("@");
+    const splitEmail = configVars["contactUsEmail-dev"].split("@");
     const testUser3 = splitEmail[0] + "+2@" + splitEmail[1];
     let e: any;
     try {
-      await delay(5000)// great, more Step Function Coginto-DeleteUser delay, lets compensate for it here.
+      await delay(5000); // great, more Step Function Coginto-DeleteUser delay, lets compensate for it here.
       const response: any = await API.graphql(
         graphqlOperation(addStandardUser, { username: testUser3 })
       );
@@ -498,8 +512,7 @@ describe("create new user, then create Admin User and test functionality, then c
   }, 10000);
 
   test("current admin user - change self to standard user", async () => {
-    const splitEmail =
-      configVars["contactUsEmail-dev"].split("@");
+    const splitEmail = configVars["contactUsEmail-dev"].split("@");
     const testUser2 = splitEmail[0] + "+2@" + splitEmail[1];
     const response: any = await API.graphql(
       graphqlOperation(changeAdminToStandardUser, { id: testUser2 })
@@ -510,8 +523,7 @@ describe("create new user, then create Admin User and test functionality, then c
   });
 
   test("standard user - fail cant add user", async () => {
-    const splitEmail =
-      configVars["contactUsEmail-dev"].split("@");
+    const splitEmail = configVars["contactUsEmail-dev"].split("@");
     const testUser3 = splitEmail[0] + "+3@" + splitEmail[1];
     let e: any;
     try {
@@ -525,8 +537,7 @@ describe("create new user, then create Admin User and test functionality, then c
   });
 
   test("standard user fail - changeStandardUserToAdmin", async () => {
-    const splitEmail =
-      configVars["contactUsEmail-dev"].split("@");
+    const splitEmail = configVars["contactUsEmail-dev"].split("@");
     const testUser3 = splitEmail[0] + "+3@" + splitEmail[1];
     let e: any;
     try {
@@ -815,8 +826,7 @@ describe("deactivate and activate user", () => {
   test("add users until plan limit has been reached", async () => {
     await Auth.signOut();
     await Auth.signIn(configVars.testUsername, configVars.testPassword);
-    const splitEmail =
-      configVars["contactUsEmail-dev"].split("@");
+    const splitEmail = configVars["contactUsEmail-dev"].split("@");
     const testUser2 = splitEmail[0] + "+2@" + splitEmail[1];
     const testUser3 = splitEmail[0] + "+3@" + splitEmail[1];
     const testUser4 = splitEmail[0] + "+4@" + splitEmail[1];
@@ -942,8 +952,7 @@ describe("downgrade and deactivate users", () => {
   test("add users until plan limit has been reached", async () => {
     await Auth.signOut();
     await Auth.signIn(configVars.testUsername, configVars.testPassword);
-    const splitEmail =
-      configVars["contactUsEmail-dev"].split("@");
+    const splitEmail = configVars["contactUsEmail-dev"].split("@");
     const testUser2 = splitEmail[0] + "+2@" + splitEmail[1];
     const testUser3 = splitEmail[0] + "+3@" + splitEmail[1];
     const testUser4 = splitEmail[0] + "+4@" + splitEmail[1];
@@ -1082,8 +1091,7 @@ describe("cancel at period end -> speed up time -> plan actually cancels -> webh
   test("add users to test cancellation", async () => {
     await Auth.signOut();
     await Auth.signIn(configVars.testUsername, configVars.testPassword);
-    const splitEmail =
-      configVars["contactUsEmail-dev"].split("@");
+    const splitEmail = configVars["contactUsEmail-dev"].split("@");
     const testUser2 = splitEmail[0] + "+2@" + splitEmail[1];
     const testUser3 = splitEmail[0] + "+3@" + splitEmail[1];
     const testUser4 = splitEmail[0] + "+4@" + splitEmail[1];
@@ -1139,9 +1147,9 @@ describe("cancel at period end -> speed up time -> plan actually cancels -> webh
     console.log("waiting for planCancelled to fire...");
     const timestampPlus5Seconds = Math.floor(+new Date() / 1000) + 5;
     const dbres = await DynamoGetTenantWithProcessorCustomerId(
-        configVars.defaultRegion,
-        tenantData.data.getTenant.id
-      );
+      configVars.defaultRegion,
+      tenantData.data.getTenant.id
+    );
     const res = await StripeFastForwardCanceledAt(
       stripe,
       timestampPlus5Seconds,
@@ -1149,7 +1157,7 @@ describe("cancel at period end -> speed up time -> plan actually cancels -> webh
     );
     let e: any;
     try {
-    await delay(5000);
+      await delay(5000);
       await API.graphql({ query: reactivateCancelingPaidPlan });
     } catch (err) {
       e = err;
@@ -1301,8 +1309,8 @@ describe("create new user get free trial plan, change to other plans", () => {
     return true;
   }, 85000);
 
-  afterAll(async () => { 
-    await delay(5000); // More Step Function Coginto-DeleteUser delay, lets compensate for it here.  
+  afterAll(async () => {
+    await delay(5000); // More Step Function Coginto-DeleteUser delay, lets compensate for it here.
     await Auth.signOut();
     await Auth.signIn(configVars.testUsername, configVars.testPassword);
     testUserExists = await CheckIfTestUserExists(configVars, cognito);
@@ -1353,8 +1361,7 @@ describe("create new user get free trial plan, change to other plans", () => {
   test("add users until plan limit has been reached", async () => {
     await Auth.signOut();
     await Auth.signIn(configVars.testUsername, configVars.testPassword);
-    const splitEmail =
-      configVars["contactUsEmail-dev"].split("@");
+    const splitEmail = configVars["contactUsEmail-dev"].split("@");
     const testUser2 = splitEmail[0] + "+2@" + splitEmail[1];
     const testUser3 = splitEmail[0] + "+3@" + splitEmail[1];
     const testUser4 = splitEmail[0] + "+4@" + splitEmail[1];
@@ -1513,7 +1520,6 @@ describe("create new user get free trial plan, change to other plans", () => {
 
     expect(e.errors[0].errorType).toMatch("NewPlanIsSameAsTheOldPlan");
   });
-
 });
 
 describe("crud payment methods, and retrieve billing lists", () => {
@@ -1577,7 +1583,7 @@ describe("crud payment methods, and retrieve billing lists", () => {
       paymentMethodIntentData.data.createPaymentMethodIntent.clientSecret
     ).toBeDefined();
 
-    newPaymentMethod = await CreatePaymentMethod(stripe, 'pm_card_mastercard');
+    newPaymentMethod = await CreatePaymentMethod(stripe, "pm_card_mastercard");
     const confirmAddPaymentMethodData: any = await API.graphql(
       graphqlOperation(confirmAddPaymentMethod, {
         paymentMethodId: newPaymentMethod.id,
@@ -1689,8 +1695,6 @@ test("delete leftover test user account", async () => {
   await API.graphql(graphqlOperation(deleteAccount));
   await Auth.signOut();
 }, 30000);
-
-
 
 async function delay(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));

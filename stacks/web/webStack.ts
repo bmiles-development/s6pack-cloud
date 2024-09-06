@@ -21,7 +21,7 @@ import { UserService } from "./app/service-user/service"
 import { PlanService } from './app/service-plan/service'
 
 /* Presenters */ 
-import { AppSyncGraphqlController } from './interface/controller-appsync/appsyncGraphqlController'
+import { AppSyncGraphqlController } from './interface/controllerPresenter-appsync/appsyncGraphqlController'
 import { Route53Record } from '@cdktf/provider-aws/lib/route53-record'
 import { AcmCertificateValidationResource } from './infrastructure/aws/acmCertificateValidationResource'
 import { AppsyncDomainNameResource } from '../sharedResources/infrastructure/aws/appsyncDomainNameResource'
@@ -75,8 +75,8 @@ export class WebStack extends TerraformStack {
       const accountId = dataCallerIdentity.accountId
       const awsUsEast1Provider = new AwsProvider(this, "awsUse1", { alias: 'use1',region: 'us-east-1' });  //Hard code a us-east-1 for cloudfront ssl certs (only available in us-east-1)
       const iamResource = new Iam(this, "Iam", accountId, region, stackName)
-      const schemaFile = readFileSync(join(stackPath,"interface","controller-appsync","schema.graphql"), 'utf-8')
-      const appsyncController = new AppSyncGraphqlController(this, "AppSyncGraphqlController",accountId, region, stackName, join(stackPath,"interface","controller-appsync"))
+      const schemaFile = readFileSync(join(stackPath,"interface","controllerPresenter-appsync","schema.graphql"), 'utf-8')
+      const appsyncController = new AppSyncGraphqlController(this, "AppSyncGraphqlController",accountId, region, stackName, join(stackPath,"interface","controllerPresenter-appsync"))
       const lambdaResource = new Lambda(this, stackName, region, accountId, iamResource.roles['lambdaServiceRole'].arn, "_LambdaStepFunctions", dataStack.cloudwatchResource)
       
       const lambdaLayersResource = new LambdaLayers(this, stackName+"-lambdaLayers")

@@ -96,7 +96,7 @@ export const disableDeleteAccount = /* GraphQL */ `
 export const deleteAccount = /* GraphQL */ `
     mutation DeleteAccount {
         deleteAccount{
-            success
+            id
         }
     }
 `;

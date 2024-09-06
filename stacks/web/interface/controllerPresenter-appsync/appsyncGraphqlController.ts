@@ -27,7 +27,7 @@ export class AppSyncGraphqlController extends Construct {
         accountId: accountId,
         stackName:stackName
       }),
-      responseTemplate: Fn.file(join(filePath,"../presenter-appsync/genericResponseResolver.vtl"))
+      responseTemplate: Fn.file(join(filePath,"../controllerPresenter-appsync/genericResponseResolver.vtl"))
     }
 
     this._graphqlResolvers['Tenant-plan'] = {
@@ -40,7 +40,7 @@ export class AppSyncGraphqlController extends Construct {
         accountId: accountId,
         stackName:stackName
       }),
-      responseTemplate: Fn.file(join(filePath,"../presenter-appsync/genericResponseResolver.vtl"))
+      responseTemplate: Fn.file(join(filePath,"../controllerPresenter-appsync/genericResponseResolver.vtl"))
     }
 
     this._graphqlResolvers['addAdminUser'] = {
@@ -53,7 +53,7 @@ export class AppSyncGraphqlController extends Construct {
         accountId: accountId,
         stackName:stackName
       }),
-      responseTemplate: Fn.file(join(filePath,"../presenter-appsync/genericResponseResolver.vtl"))
+      responseTemplate: Fn.file(join(filePath,"../controllerPresenter-appsync/genericResponseResolver.vtl"))
     }
 
     this._graphqlResolvers['addStandardUser'] = {
@@ -66,7 +66,7 @@ export class AppSyncGraphqlController extends Construct {
         accountId: accountId,
         stackName:stackName
       }),
-      responseTemplate: Fn.file(join(filePath,"../presenter-appsync/genericResponseResolver.vtl"))
+      responseTemplate: Fn.file(join(filePath,"../controllerPresenter-appsync/genericResponseResolver.vtl"))
     }
 
     this._graphqlResolvers['deleteAdminUser'] = {
@@ -79,7 +79,7 @@ export class AppSyncGraphqlController extends Construct {
         accountId: accountId,
         stackName:stackName
       }),
-      responseTemplate: Fn.file(join(filePath,"../presenter-appsync/genericResponseResolver.vtl"))
+      responseTemplate: Fn.file(join(filePath,"../controllerPresenter-appsync/genericResponseResolver.vtl"))
     }
 
     this._graphqlResolvers['enableDeleteAccount'] = {
@@ -92,7 +92,7 @@ export class AppSyncGraphqlController extends Construct {
         accountId: accountId,
         stackName:stackName
       }),
-      responseTemplate: Fn.file(join(filePath,"../presenter-appsync/genericResponseResolver.vtl"))
+      responseTemplate: Fn.file(join(filePath,"../controllerPresenter-appsync/genericResponseResolver.vtl"))
     }
 
     this._graphqlResolvers['disableDeleteAccount'] = {
@@ -105,7 +105,7 @@ export class AppSyncGraphqlController extends Construct {
         accountId: accountId,
         stackName:stackName
       }),
-      responseTemplate: Fn.file(join(filePath,"../presenter-appsync/genericResponseResolver.vtl"))
+      responseTemplate: Fn.file(join(filePath,"../controllerPresenter-appsync/genericResponseResolver.vtl"))
     }
 
     this._graphqlResolvers['deleteAccount'] = {
@@ -118,7 +118,7 @@ export class AppSyncGraphqlController extends Construct {
         accountId: accountId,
         stackName:stackName
       }),
-      responseTemplate: Fn.file(join(filePath,"../presenter-appsync/genericResponseResolver.vtl"))
+      responseTemplate: Fn.file(join(filePath,"../controllerPresenter-appsync/genericResponseResolver.vtl"))
     }
 
     this._graphqlResolvers['deleteStandardUser'] = {
@@ -131,7 +131,7 @@ export class AppSyncGraphqlController extends Construct {
         accountId: accountId,
         stackName:stackName
       }),
-      responseTemplate: Fn.file(join(filePath,"../presenter-appsync/genericResponseResolver.vtl"))
+      responseTemplate: Fn.file(join(filePath,"../controllerPresenter-appsync/genericResponseResolver.vtl"))
     }
 
     this._graphqlResolvers['changeStandardUserToAdmin'] = {
@@ -144,7 +144,7 @@ export class AppSyncGraphqlController extends Construct {
         accountId: accountId,
         stackName:stackName
       }),
-      responseTemplate: Fn.file(join(filePath,"../presenter-appsync/genericResponseResolver.vtl"))
+      responseTemplate: Fn.file(join(filePath,"../controllerPresenter-appsync/genericResponseResolver.vtl"))
     }
 
     this._graphqlResolvers['changeAdminToStandardUser'] = {
@@ -157,7 +157,7 @@ export class AppSyncGraphqlController extends Construct {
         accountId: accountId,
         stackName:stackName
       }),
-      responseTemplate: Fn.file(join(filePath,"../presenter-appsync/genericResponseResolver.vtl"))
+      responseTemplate: Fn.file(join(filePath,"../controllerPresenter-appsync/genericResponseResolver.vtl"))
     }
 
     this._graphqlResolvers['activateUser'] = {
@@ -170,7 +170,7 @@ export class AppSyncGraphqlController extends Construct {
         accountId: accountId,
         stackName:stackName
       }),
-      responseTemplate: Fn.file(join(filePath,"../presenter-appsync/genericResponseResolver.vtl"))
+      responseTemplate: Fn.file(join(filePath,"../controllerPresenter-appsync/genericResponseResolver.vtl"))
     }
 
     this._graphqlResolvers['deactivateUser'] = {
@@ -183,7 +183,7 @@ export class AppSyncGraphqlController extends Construct {
         accountId: accountId,
         stackName:stackName
       }),
-      responseTemplate: Fn.file(join(filePath,"../presenter-appsync/genericResponseResolver.vtl"))
+      responseTemplate: Fn.file(join(filePath,"../controllerPresenter-appsync/genericResponseResolver.vtl"))
     }
 
     this._graphqlResolvers['getUser'] = {
@@ -196,7 +196,7 @@ export class AppSyncGraphqlController extends Construct {
         accountId: accountId,
         stackName:stackName
       }),
-      responseTemplate: Fn.file(join(filePath,"../presenter-appsync/genericResponseResolver.vtl"))
+      responseTemplate: Fn.file(join(filePath,"../controllerPresenter-appsync/genericResponseResolver.vtl"))
     }
 
     this._graphqlResolvers['listUsers'] = {
@@ -209,7 +209,7 @@ export class AppSyncGraphqlController extends Construct {
         accountId: accountId,
         stackName:stackName
       }),
-      responseTemplate: Fn.file(join(filePath,"../presenter-appsync/genericResponseResolver.vtl"))
+      responseTemplate: Fn.file(join(filePath,"../controllerPresenter-appsync/genericResponseResolver.vtl"))
     }
 
     this._graphqlResolvers['checkout'] = {
@@ -222,7 +222,7 @@ export class AppSyncGraphqlController extends Construct {
         accountId: accountId,
         stackName:stackName
       }),
-      responseTemplate: Fn.file(join(filePath,"../presenter-appsync/genericResponseResolver.vtl"))
+      responseTemplate: Fn.file(join(filePath,"../controllerPresenter-appsync/genericResponseResolver.vtl"))
     }
 
     this._graphqlResolvers['getUpcomingInvoice'] = {
@@ -235,7 +235,7 @@ export class AppSyncGraphqlController extends Construct {
         accountId: accountId,
         stackName:stackName
       }),
-      responseTemplate: Fn.file(join(filePath,"../presenter-appsync/genericResponseResolver.vtl"))
+      responseTemplate: Fn.file(join(filePath,"../controllerPresenter-appsync/genericResponseResolver.vtl"))
     }
 
     this._graphqlResolvers['changePlan'] = {
@@ -248,7 +248,7 @@ export class AppSyncGraphqlController extends Construct {
         accountId: accountId,
         stackName:stackName
       }),
-      responseTemplate: Fn.file(join(filePath,"../presenter-appsync/genericResponseResolver.vtl"))
+      responseTemplate: Fn.file(join(filePath,"../controllerPresenter-appsync/genericResponseResolver.vtl"))
     }
 
     this._graphqlResolvers['createPlanIntent'] = {
@@ -261,7 +261,7 @@ export class AppSyncGraphqlController extends Construct {
         accountId: accountId,
         stackName:stackName
       }),
-      responseTemplate: Fn.file(join(filePath,"../presenter-appsync/genericResponseResolver.vtl"))
+      responseTemplate: Fn.file(join(filePath,"../controllerPresenter-appsync/genericResponseResolver.vtl"))
     }
 
     this._graphqlResolvers['createPaymentMethodIntent'] = {
@@ -274,7 +274,7 @@ export class AppSyncGraphqlController extends Construct {
         accountId: accountId,
         stackName:stackName
       }),
-      responseTemplate: Fn.file(join(filePath,"../presenter-appsync/genericResponseResolver.vtl"))
+      responseTemplate: Fn.file(join(filePath,"../controllerPresenter-appsync/genericResponseResolver.vtl"))
     }
 
     this._graphqlResolvers['cancelPlanPeriodEndedWebhook'] = {
@@ -287,7 +287,7 @@ export class AppSyncGraphqlController extends Construct {
         accountId: accountId,
         stackName:stackName
       }),
-      responseTemplate: Fn.file(join(filePath,"../presenter-appsync/genericResponseResolver.vtl"))
+      responseTemplate: Fn.file(join(filePath,"../controllerPresenter-appsync/genericResponseResolver.vtl"))
     }
 
     this._graphqlResolvers['reactivateCancelingPaidPlan'] = {
@@ -300,7 +300,7 @@ export class AppSyncGraphqlController extends Construct {
         accountId: accountId,
         stackName:stackName
       }),
-      responseTemplate: Fn.file(join(filePath,"../presenter-appsync/genericResponseResolver.vtl"))
+      responseTemplate: Fn.file(join(filePath,"../controllerPresenter-appsync/genericResponseResolver.vtl"))
     }
 
     this._graphqlResolvers['cancelPaidPlanAtPeriodEnd'] = {
@@ -313,7 +313,7 @@ export class AppSyncGraphqlController extends Construct {
         accountId: accountId,
         stackName:stackName
       }),
-      responseTemplate: Fn.file(join(filePath,"../presenter-appsync/genericResponseResolver.vtl"))
+      responseTemplate: Fn.file(join(filePath,"../controllerPresenter-appsync/genericResponseResolver.vtl"))
     }
 
     this._graphqlResolvers['contactUs'] = {
@@ -326,7 +326,7 @@ export class AppSyncGraphqlController extends Construct {
         accountId: accountId,
         stackName:stackName
       }),
-      responseTemplate: Fn.file(join(filePath,"../presenter-appsync/genericResponseResolver.vtl"))
+      responseTemplate: Fn.file(join(filePath,"../controllerPresenter-appsync/genericResponseResolver.vtl"))
     }
 
     this._graphqlResolvers['listPlans'] = {
@@ -339,7 +339,7 @@ export class AppSyncGraphqlController extends Construct {
         accountId: accountId,
         stackName:stackName
       }),
-      responseTemplate: Fn.file(join(filePath,"../presenter-appsync/genericResponseResolver.vtl"))
+      responseTemplate: Fn.file(join(filePath,"../controllerPresenter-appsync/genericResponseResolver.vtl"))
     }
 
     this._graphqlResolvers['listCharges'] = {
@@ -352,7 +352,7 @@ export class AppSyncGraphqlController extends Construct {
         accountId: accountId,
         stackName:stackName
       }),
-      responseTemplate: Fn.file(join(filePath,"../presenter-appsync/genericResponseResolver.vtl"))
+      responseTemplate: Fn.file(join(filePath,"../controllerPresenter-appsync/genericResponseResolver.vtl"))
     }
 
     this._graphqlResolvers['listInvoices'] = {
@@ -365,7 +365,7 @@ export class AppSyncGraphqlController extends Construct {
         accountId: accountId,
         stackName:stackName
       }),
-      responseTemplate: Fn.file(join(filePath,"../presenter-appsync/genericResponseResolver.vtl"))
+      responseTemplate: Fn.file(join(filePath,"../controllerPresenter-appsync/genericResponseResolver.vtl"))
     }
 
     this._graphqlResolvers['listPaymentMethods'] = {
@@ -378,7 +378,7 @@ export class AppSyncGraphqlController extends Construct {
         accountId: accountId,
         stackName:stackName
       }),
-      responseTemplate: Fn.file(join(filePath,"../presenter-appsync/genericResponseResolver.vtl"))
+      responseTemplate: Fn.file(join(filePath,"../controllerPresenter-appsync/genericResponseResolver.vtl"))
     }
 
     this._graphqlResolvers['deletePaymentMethod'] = {
@@ -391,7 +391,7 @@ export class AppSyncGraphqlController extends Construct {
         accountId: accountId,
         stackName:stackName
       }),
-      responseTemplate: Fn.file(join(filePath,"../presenter-appsync/genericResponseResolver.vtl"))
+      responseTemplate: Fn.file(join(filePath,"../controllerPresenter-appsync/genericResponseResolver.vtl"))
     }
 
     this._graphqlResolvers['setDefaultPaymentMethod'] = {
@@ -404,7 +404,7 @@ export class AppSyncGraphqlController extends Construct {
         accountId: accountId,
         stackName:stackName
       }),
-      responseTemplate: Fn.file(join(filePath,"../presenter-appsync/genericResponseResolver.vtl"))
+      responseTemplate: Fn.file(join(filePath,"../controllerPresenter-appsync/genericResponseResolver.vtl"))
     }
 
     this._graphqlResolvers['getPlan'] = {
@@ -417,7 +417,7 @@ export class AppSyncGraphqlController extends Construct {
         accountId: accountId,
         stackName:stackName
       }),
-      responseTemplate: Fn.file(join(filePath,"../presenter-appsync/genericResponseResolver.vtl"))
+      responseTemplate: Fn.file(join(filePath,"../controllerPresenter-appsync/genericResponseResolver.vtl"))
     }
 
     this._graphqlResolvers['paymentMethodAdded'] = {
@@ -430,7 +430,7 @@ export class AppSyncGraphqlController extends Construct {
         accountId: accountId,
         stackName:stackName
       }),
-      responseTemplate: Fn.file(join(filePath,"../presenter-appsync/genericResponseResolverless.vtl"))
+      responseTemplate: Fn.file(join(filePath,"../controllerPresenter-appsync/genericResponseResolverless.vtl"))
     }
 
     this._graphqlResolvers['planModified'] = {
@@ -443,7 +443,7 @@ export class AppSyncGraphqlController extends Construct {
         accountId: accountId,
         stackName:stackName
       }),
-      responseTemplate: Fn.file(join(filePath,"../presenter-appsync/genericResponseResolver-subscription.vtl"))
+      responseTemplate: Fn.file(join(filePath,"../controllerPresenter-appsync/genericResponseResolver-subscription.vtl"))
     }
 
     this._graphqlResolvers['userAdded'] = {
@@ -451,7 +451,7 @@ export class AppSyncGraphqlController extends Construct {
       field: "userAdded",
       datasource: this.DATASOURCES.NONE,
       requestTemplate: Fn.templatefile(join(filePath,"genericRequestResolverUsingTenantId-subscription.vtl"), {}),
-      responseTemplate: Fn.file(join(filePath,"../presenter-appsync/genericResponseResolver-subscription.vtl"))
+      responseTemplate: Fn.file(join(filePath,"../controllerPresenter-appsync/genericResponseResolver-subscription.vtl"))
     }
 
     this._graphqlResolvers['userDeleted'] = {
@@ -459,7 +459,7 @@ export class AppSyncGraphqlController extends Construct {
       field: "userDeleted",
       datasource: this.DATASOURCES.NONE,
       requestTemplate: Fn.templatefile(join(filePath,"genericRequestResolverUsingTenantId-subscription.vtl"),{}),
-      responseTemplate: Fn.file(join(filePath,"../presenter-appsync/genericResponseResolver-subscription.vtl"))
+      responseTemplate: Fn.file(join(filePath,"../controllerPresenter-appsync/genericResponseResolver-subscription.vtl"))
     }
 
     this._graphqlResolvers['planCanceled'] = {
@@ -467,7 +467,7 @@ export class AppSyncGraphqlController extends Construct {
       field: "planCanceled",
       datasource: this.DATASOURCES.NONE,
       requestTemplate: Fn.templatefile(join(filePath,"genericRequestResolver-subscription.vtl"),{}),
-      responseTemplate: Fn.file(join(filePath,"../presenter-appsync/genericResponseResolver-subscription.vtl"))
+      responseTemplate: Fn.file(join(filePath,"../controllerPresenter-appsync/genericResponseResolver-subscription.vtl"))
     }
 
     this._graphqlResolvers['confirmAddPlan'] = {
@@ -480,7 +480,7 @@ export class AppSyncGraphqlController extends Construct {
         accountId: accountId,
         stackName:stackName
       }),
-      responseTemplate: Fn.file(join(filePath,"../presenter-appsync/genericResponseResolver.vtl"))
+      responseTemplate: Fn.file(join(filePath,"../controllerPresenter-appsync/genericResponseResolver.vtl"))
     }
 
     this._graphqlResolvers['confirmAddPaymentMethod'] = {
@@ -493,7 +493,7 @@ export class AppSyncGraphqlController extends Construct {
         accountId: accountId,
         stackName:stackName
       }),
-      responseTemplate: Fn.file(join(filePath,"../presenter-appsync/genericResponseResolver.vtl"))
+      responseTemplate: Fn.file(join(filePath,"../controllerPresenter-appsync/genericResponseResolver.vtl"))
     }
     
     this._graphqlResolvers['getTenant'] = {
@@ -506,7 +506,7 @@ export class AppSyncGraphqlController extends Construct {
         accountId: accountId,
         stackName:stackName
       }),
-      responseTemplate: Fn.file(join(filePath,"../presenter-appsync/genericResponseResolver.vtl"))
+      responseTemplate: Fn.file(join(filePath,"../controllerPresenter-appsync/genericResponseResolver.vtl"))
     }
 
     this._graphqlResolvers['getTenantTrialPeriod'] = {
@@ -519,7 +519,15 @@ export class AppSyncGraphqlController extends Construct {
         accountId: accountId,
         stackName:stackName
       }),
-      responseTemplate: Fn.file(join(filePath,"../presenter-appsync/genericResponseResolver.vtl"))
+      responseTemplate: Fn.file(join(filePath,"../controllerPresenter-appsync/genericResponseResolver.vtl"))
+    }
+
+    this._graphqlResolvers['accountDeleted'] = {
+      type: "Subscription",
+      field: "accountDeleted",
+      datasource: this.DATASOURCES.NONE,
+      requestTemplate: Fn.templatefile(join(filePath,"genericRequestResolverUsingTenantId-subscription.vtl"),{}),
+      responseTemplate: Fn.file(join(filePath,"../controllerPresenter-appsync/genericResponseResolver-subscription.vtl"))
     }
   }
 }
