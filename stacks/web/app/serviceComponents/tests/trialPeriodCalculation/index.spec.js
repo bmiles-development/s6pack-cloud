@@ -1,4 +1,4 @@
-const handler = require('../../trialPeriodCalculationFunction/index')
+const handler = require('../../trialPeriodCalculationFunction/index');
 
 const trialPeriodDays = 14
 
