@@ -268,11 +268,6 @@ type User @aws_cognito_user_pools(cognito_groups: ["Free","Owner","Admin","User"
   	tenantId: String
 }
 
-type Result {
-	# Generic response object for use with mutations.
-	userId: String
-}
-
 type MessageResult @aws_iam @aws_cognito_user_pools(cognito_groups: ["Free","Owner","Admin","User"]){
 	# Generic response object for use with mutations that require more information.
 	messageType: String!

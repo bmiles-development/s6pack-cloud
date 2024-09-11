@@ -1,5 +1,6 @@
 { 
     "StartAt": "StripeWebhookValidation",
+    "Comment": "This state machine is used to handle the webhook from stripe when a tenant's plan is canceled or accountDeleted. See CheckIfAccountDeleted",
     "States": {
       "StripeWebhookValidation": {
         "Type": "Task",
@@ -87,6 +88,25 @@
             "Variable": "$.currentUserCount",
             "NumericGreaterThanPath": "$.newPlanUserCount",
             "Next": "ListTenantUsersFilter"
+          }
+        ],
+        "Default": "JsonParseBody"
+      },
+      "JsonParseBody": {
+        "Type": "Pass",
+        "Next": "CheckIfAccountDeleted",
+        "Parameters": {
+          "body.$": "States.StringToJson($.arguments.input.body)"
+        },
+        "ResultPath": "$.jsonParse"
+      },
+      "CheckIfAccountDeleted": {
+        "Type": "Choice",
+        "Choices": [
+          {
+            "Variable": "$.jsonParse.body.data.object.metadata.accountDeleted",
+            "IsPresent": true,
+            "Next": "Pass"
           }
         ],
         "Default": "GetTenant"

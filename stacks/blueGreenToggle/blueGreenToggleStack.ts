@@ -6,7 +6,7 @@ import { Route53 } from "../sharedResources/infrastructure/aws/route53";
 import { AppsyncDomainNameResource } from "../sharedResources/infrastructure/aws/appsyncDomainNameResource"
 import { Route53Record } from "@cdktf/provider-aws/lib/route53-record";
 
-export class blueGreenToggleStack extends TerraformStack {
+export class BlueGreenToggleStack extends TerraformStack {
     constructor(
       scope: Construct, 
       name: string, 
@@ -36,7 +36,7 @@ export class blueGreenToggleStack extends TerraformStack {
       appsyncDomainNameResource.addAppsyncDomainName(graphqlDirectAccessApiUrl, hostingStackAcmSSlCertArn, name)
       appsyncDomainNameResource.addAppsyncDomainNameApiAssociation(currentLiveWebStack.appsyncResource.graphqlApi.id, name)
      
-      route53.addAppsyncCustomDoamain(graphqlDirectAccessApiUrl, appsyncDomainNameResource.appsyncDomainNameResource.appsyncDomainName, hostingStackZoneId, currentLiveWebStack.appsyncDomainNameResource.appsyncDomainNameResource.hostedZoneId)
+      route53.addCustomDomainToCloudfront(graphqlDirectAccessApiUrl, appsyncDomainNameResource.appsyncDomainNameResource.appsyncDomainName, hostingStackZoneId, currentLiveWebStack.appsyncDomainNameResource.appsyncDomainNameResource.hostedZoneId)
       new TerraformOutput(this, 'appsyncDomainName', { value: graphqlDirectAccessApiUrl })
 
       //add blueGreenToggle webhook endpoint for stripe

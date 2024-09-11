@@ -49,11 +49,67 @@
       },
       "ListTenantUsers": {
         "Type": "Pass",
-        "Next": "CognitoListUsers",
+        "Next": "GetProcessorSubscription",
         "ResultPath": "$.filter",
         "Result": {
           "template": "name = '{}'"
         }
+      },
+      "GetProcessorSubscription": {
+        "Type": "Task",
+        "Resource": "arn:aws:states:::lambda:invoke",
+        "Parameters": {
+          "Payload": {
+            "callback": "querySubscriptionByMetadataPlanIdAndTenantId",
+            "planId.$": "$.tenant.Item.PlanId.S",
+            "tenantId.$": "$.identity.claims.name"
+          },
+          "FunctionName": "${stripeApiEntity}"
+        },
+        "Retry": [
+          {
+            "ErrorEquals": [
+              "Lambda.ServiceException",
+              "Lambda.AWSLambdaException",
+              "Lambda.SdkClientException",
+              "Lambda.TooManyRequestsException"
+            ],
+            "IntervalSeconds": 1,
+            "MaxAttempts": 3,
+            "BackoffRate": 2
+          }
+        ],
+        "Next": "StripeUpdateAddSubscriptionMetadata",
+        "ResultPath": "$.GetProcessorSubscription"
+      },
+      "StripeUpdateAddSubscriptionMetadata": {
+        "Type": "Task",
+        "Resource": "arn:aws:states:::lambda:invoke",
+        "ResultPath": "$.SubscriptionUpdatedMetadata",
+        "Parameters": {
+          "FunctionName": "${stripeApiEntity}",
+          "Payload": {
+            "callback": "updateSubscriptionMetadata",
+            "planId.$": "$.GetProcessorSubscription.Payload.data[0].id",
+            "metadata": {
+              "accountDeleted": true
+            }
+          }
+        },
+        "Retry": [
+          {
+            "ErrorEquals": [
+              "Lambda.ServiceException",
+              "Lambda.AWSLambdaException",
+              "Lambda.SdkClientException",
+              "Lambda.TooManyRequestsException"
+            ],
+            "IntervalSeconds": 2,
+            "MaxAttempts": 6,
+            "BackoffRate": 2
+          }
+        ],
+        "Next": "CognitoListUsers"
       },
       "CognitoListUsers": {
         "Type": "Task",

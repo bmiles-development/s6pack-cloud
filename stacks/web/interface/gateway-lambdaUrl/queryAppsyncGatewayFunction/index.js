@@ -18,7 +18,7 @@ exports.handler = async (event) => {
   let eventBody = JSON.parse(event.body);
 
   // Since Clodfront AWS_IAM cannot forward POST requests to lambda url, we can pass a 
-  // header unique key to this lambda and then we can isolate traffic through the cloudfron endpoint only 
+  // header unique "lambda-url-access" to this lambda and then we can isolate traffic through the cloudfront endpoint only 
 
   switch (eventBody["type"]) {
     case "customer.subscription.deleted":

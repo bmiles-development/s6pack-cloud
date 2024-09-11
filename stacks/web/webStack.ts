@@ -7,7 +7,7 @@ import { StepFunctions } from "../sharedResources/infrastructure/aws/stepFunctio
 import { Cloudfront } from '../sharedResources/infrastructure/aws/cloudfront'
 import { StripeProvider } from "../../.gen/providers/stripe/provider"
 import { Appsync } from "./infrastructure/aws/appsync"
-import { S3 } from "./infrastructure/aws/s3"
+import { S3 } from "../sharedResources/infrastructure/aws/s3"
 import { AwsProvider } from '@cdktf/provider-aws/lib/provider'
 import { DataAwsCallerIdentity } from '@cdktf/provider-aws/lib/data-aws-caller-identity'
 import { readFileSync } from 'fs'
@@ -153,7 +153,7 @@ export class WebStack extends TerraformStack {
       this._appsyncDomainNameResource.addAppsyncDomainNameApiAssociation(this._appsyncResource.graphqlApi.id, stackName)
       
       const route53 = new Route53(this, stackName+"-route53CustomDomainNames")
-      route53.addAppsyncCustomDoamain( config.appsyncDomainName, this._appsyncDomainNameResource.appsyncDomainNameResource.appsyncDomainName, hostingStack.hostedZoneResource.zone.id, this._appsyncDomainNameResource.appsyncDomainNameResource.hostedZoneId)
+      route53.addCustomDomainToCloudfront( config.appsyncDomainName, this._appsyncDomainNameResource.appsyncDomainNameResource.appsyncDomainName, hostingStack.hostedZoneResource.zone.id, this._appsyncDomainNameResource.appsyncDomainNameResource.hostedZoneId)
       new TerraformOutput(this, 'appsyncDomainName', { value: this._appsyncDomainNameResource.appsyncDomainNameResource.appsyncDomainName })
       new TerraformOutput(this, 'appsyncDomainZoneId', { value: this._appsyncDomainNameResource.appsyncDomainNameResource.hostedZoneId })
      //logging

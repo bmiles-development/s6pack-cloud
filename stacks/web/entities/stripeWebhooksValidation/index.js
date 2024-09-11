@@ -3,7 +3,7 @@ const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 exports.handler = async function (event, context, callback) {
   const webhookSecret = process.env.STRIPE_WEBHOOK_SIGNING_SECRET;
   try {
-    argumentHeaders = JSON.parse(event.argumentHeaders)
+    let argumentHeaders = JSON.parse(event.argumentHeaders)
     const sig = argumentHeaders["stripe-signature"];
     console.log(event.body)
 

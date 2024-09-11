@@ -8,7 +8,8 @@ import { TFStateBackupStack } from './stacks/tfStateBackup/TFStateBackupStack'
 import { HostingStack } from './stacks/hosting/hostingStack' 
 import { DataStack } from './stacks/data/dataStack' 
 import { WebStack } from './stacks/web/webStack' 
-import { blueGreenToggleStack } from './stacks/blueGreenToggle/blueGreenToggleStack'
+import { BlueGreenToggleStack } from './stacks/blueGreenToggle/blueGreenToggleStack'
+import { DocumentationStack } from './stacks/documentation/documentationStack'
 
 // Construct the app
 const app = new App();
@@ -30,6 +31,9 @@ config['webStackDev'] = webStackConfig['webStackDev']
 
 const configblueGreenToggleStackFile = readFileSync('./.config.blueGreenToggleStack.yaml', 'utf8')
 config['blueGreenToggleStack'] = parse(configblueGreenToggleStackFile)
+
+const configDocumentationStackFile = readFileSync('./.config.documentationStack.yaml', 'utf8')
+config['documentationStack'] = parse(configDocumentationStackFile)
 
 // set up bucketname for remote TFState files managed on S3
 const backendStateS3BucketName = config['hostingStack']['logBucketNamePrefix']+"-tf-state-backup-bucket";
@@ -140,8 +144,19 @@ webStacks[config['webStackBlue'].name] = new WebStack(
  const currentLiveAppStackName = config['blueGreenToggleStack'].currentLiveAppStackName
 
 
+ // DocumentationStack
+// Simple wewbhosting stack for hosting a documentation site on S3.
+new DocumentationStack(
+  app,
+  "documentationStack",
+  config['hostingStack'].defaultRegion,
+  config['documentationStack'],
+  hostingStack,
+  backendStateS3BucketName,
+);
 
-new blueGreenToggleStack(
+
+new BlueGreenToggleStack(
   app,
   "blueGreenToggleStack",
   hostingStack.hostedZoneResource.zone.id,

@@ -7,16 +7,16 @@ export class Route53 extends Construct {
         super(scope, name)
     }
 
-    public addAppsyncCustomDoamain(appsyncDomainName:string, appsyncCloudfrontUrl:string, route53ZoneId:string, appsyncZoneId:string){
+    public addCustomDomainToCloudfront(domainName:string, cloudfrontUrl:string, route53ZoneId:string, aliasZoneId:string){
         //cloudfront formation association used for appsync custom domain
         
-        new Route53Record(this, appsyncDomainName+"-appsync-custom-domain", {
+        new Route53Record(this, domainName+"-appsync-custom-domain", {
             zoneId: route53ZoneId,
-            name: appsyncDomainName,
+            name: domainName,
             type: "A",
             alias: {
-                name: appsyncCloudfrontUrl,
-                zoneId: appsyncZoneId,
+                name: cloudfrontUrl,
+                zoneId: aliasZoneId,
                 evaluateTargetHealth: true
             }
         })
