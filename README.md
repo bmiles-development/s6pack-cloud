@@ -13,7 +13,7 @@ s6pack is an open-source cloud Infrastructure-as-Code application to quickly bui
 This repo is the cloud application code. To see the Client Application repo go [here](https://github.com/bmiles-development/s6pack-client)
 
 # Documentation
-[Read the s6pack docs](https://docs.s6pack.build)
+[Read the s6pack docs](https://docs.s6pack.build/getting-started/welcome/)
 
 # Support
 [Get help in th s6pack Discord](https://discord.gg/84bWSVbq), and check us out on [Twitter](https://twitter.com/s6pack_build)
