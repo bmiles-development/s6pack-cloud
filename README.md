@@ -1,5 +1,5 @@
 ![s6pack](./public/s6pack.svg)
-
+# s6Pack - Cloud Applocation
 1. Serverless
 2. Scalable
 3. Secure
@@ -8,7 +8,6 @@
 6. Starter
 * Pack
 
-# s6Pack - Cloud Applocation
 s6pack is an open-source cloud Infrastructure-as-Code application to quickly build subscription payment Software-as-a-Service applications. See the demo [here](https://s6pack.build)
 
 This repo is the cloud application code. To see the Client Application repo go [here](https://github.com/bmiles-development/s6pack-client)
