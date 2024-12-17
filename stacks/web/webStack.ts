@@ -144,7 +144,6 @@ export class WebStack extends TerraformStack {
       })
 
       //Note: OAC for lambda from cloudfront is limited to GET requests only: https://community.aws/content/2fuBTcoVg7nnRIVLnqjIsIC8LAi/enhancing-security-for-lambda-function-urls?lang=en
-      envVars
       new Route53Record(this, webhookSubdomainName+"-lambdaWebhook-cloudfront-domain", {zoneId: hostingStack.hostedZoneResource.zone.id, name: this._webhookDomainName, type: "CNAME", ttl: 60, records: [cloudfront.cloudfrontDistributions["webhookUrl"].domainName]})
     
       new AcmCertificateValidationResource( this, "acmCertificateValidation", hostingStack.acmResource, hostingStack.hostedZoneResource.sslRecordsBatches['appsyncSslValidationRecords'], awsUsEast1Provider)

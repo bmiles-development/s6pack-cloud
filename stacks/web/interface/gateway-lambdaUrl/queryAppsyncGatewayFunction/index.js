@@ -8,6 +8,9 @@ const url = require("url");
 const graphqlEndpointParsed = url.parse(graphqlEndpoint, true);
 
 exports.handler = async (event) => {
+  // Since Clodfront AWS_IAM cannot forward POST requests to lambda url, we can pass a 
+  // header unique "lambda-url-access" to this lambda and then we can isolate traffic through the cloudfront endpoint only 
+
   if(event.headers["lambda-url-access"] != lambdaUrlAccessUUID ){
     return {
       statusCode: 403,
@@ -17,8 +20,6 @@ exports.handler = async (event) => {
   let itemBody = {};
   let eventBody = JSON.parse(event.body);
 
-  // Since Clodfront AWS_IAM cannot forward POST requests to lambda url, we can pass a 
-  // header unique "lambda-url-access" to this lambda and then we can isolate traffic through the cloudfront endpoint only 
 
   switch (eventBody["type"]) {
     case "customer.subscription.deleted":
