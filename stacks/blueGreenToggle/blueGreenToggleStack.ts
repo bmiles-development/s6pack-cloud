@@ -18,14 +18,17 @@ export class BlueGreenToggleStack extends TerraformStack {
       graphqlDirectAccessApiUrl:string, 
       domainApexName:string, 
       backendStateS3BucketName:string ,
-      liveWebhookDomainName:string
+      liveWebhookDomainName:string,
+      useS3TfState:boolean
     ){
       super(scope, name);
-      new S3Backend(this, {
-        bucket: backendStateS3BucketName,
-        key: name,
-        region: defaultRegion
-      })
+      if(useS3TfState){
+        new S3Backend(this, {
+          bucket: backendStateS3BucketName,
+          key: name,
+          region: defaultRegion
+        })
+      }
   
       new AwsProvider(this, "aws", { region: defaultRegion });
       const cloudfront:any = new Cloudfront(this, "domain-apex-name-cloudfront-distributions")

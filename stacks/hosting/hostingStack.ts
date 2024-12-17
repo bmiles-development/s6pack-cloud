@@ -22,14 +22,15 @@ export class HostingStack extends TerraformStack {
     public get hostedZoneResource(){ return this._hostedZoneResource }
     public get sesResource(){ return this._sesResource }
   
-    constructor(scope: Construct, name: string, config: any, backendStateS3BucketName:string) {
+    constructor(scope: Construct, name: string, config: any, backendStateS3BucketName:string, useS3TfState:boolean) {
       super(scope, name);
-  
-      new S3Backend(this, {
-        bucket: backendStateS3BucketName,
-        key: name,
-        region: config.defaultRegion
-      })
+      if(useS3TfState){
+        new S3Backend(this, {
+          bucket: backendStateS3BucketName,
+          key: name,
+          region: config.defaultRegion
+        })
+      }
   
       const dataCallerIdentity = new DataAwsCallerIdentity(this,"dataCallerIdentity",{})
       const accountId = dataCallerIdentity.accountId

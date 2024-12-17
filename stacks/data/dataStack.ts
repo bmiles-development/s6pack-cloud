@@ -50,14 +50,16 @@ export class DataStack extends TerraformStack {
     public get cognitoEntitygoogleRecaptchaEntity(){return this._cognitoEntitygoogleRecaptchaEntity}
     public get stripeWebhookEndpointResource(){return this._stripeWebhookEndpointResource}
   
-    constructor(scope: Construct, stackName: string, hostedZone:string, sesResource:any, resourceType: string, config:any, defaultRegion:string, logRetentionPeriod:number, backendStateS3BucketName:string, stackPath:string, stripeToken:string, reCaptchaToken:string, freePlanDBKey:string, s3Resource:any) {
+    constructor(scope: Construct, stackName: string, hostedZone:string, sesResource:any, resourceType: string, config:any, defaultRegion:string, logRetentionPeriod:number, backendStateS3BucketName:string, stackPath:string, stripeToken:string, reCaptchaToken:string, freePlanDBKey:string, s3Resource:any, useS3TfState:boolean) {
       super(scope, stackName);
   
-      new S3Backend(this, {
-        bucket: backendStateS3BucketName,
-        key: stackName,
-        region: defaultRegion
-      })
+      if(useS3TfState){
+        new S3Backend(this, {
+          bucket: backendStateS3BucketName,
+          key: stackName,
+          region: defaultRegion
+        })
+      }
   
       /* resources */
       this._name = stackName

@@ -53,7 +53,8 @@ const hostingStack = new HostingStack(
   app,
   "hostingStack",
   config['hostingStack'],
-  backendStateS3BucketName
+  backendStateS3BucketName,
+  config['hostingStack'].useS3TfState
 );
 
 // DataStacks
@@ -72,7 +73,8 @@ const dataStackLive = new DataStack(
   hostingStack.ssmResource.parameters["stripeToken-live"],
   hostingStack.ssmResource.parameters['recaptchaSiteSecret-live'],
   "live_free_plan",
-  hostingStack.s3Resource
+  hostingStack.s3Resource,
+  config['hostingStack'].useS3TfState
 );
 const dataStackDev = new DataStack(
   app,
@@ -88,7 +90,8 @@ const dataStackDev = new DataStack(
   hostingStack.ssmResource.parameters["stripeToken-dev"],
   hostingStack.ssmResource.parameters['recaptchaSiteSecret-dev'],
   "dev_free_plan",
-  hostingStack.s3Resource
+  hostingStack.s3Resource,
+  config['hostingStack'].useS3TfState
 );
 
 // webStacks 
@@ -106,6 +109,7 @@ webStacks[config['webStackDev'].name] = new WebStack(
   hostingStack.ssmResource.parameters['contactUsEmail-dev'],
   "dev_free_plan",
   hostingStack.ssmResource.parameters['cloudfrontLambdaUrlAccessUuid-dev'],
+  config['hostingStack'].useS3TfState
 );
 
 webStacks[config['webStackGreen'].name] = new WebStack(
@@ -122,6 +126,7 @@ webStacks[config['webStackGreen'].name] = new WebStack(
   hostingStack.ssmResource.parameters["contactUsEmail-live"],
   "live_free_plan",
   hostingStack.ssmResource.parameters['cloudfrontLambdaUrlAccessUuid-live'],
+  config['hostingStack'].useS3TfState
 );
 
 webStacks[config['webStackBlue'].name] = new WebStack(
@@ -138,6 +143,7 @@ webStacks[config['webStackBlue'].name] = new WebStack(
   hostingStack.ssmResource.parameters["contactUsEmail-live"],
   "live_free_plan",
   hostingStack.ssmResource.parameters['cloudfrontLambdaUrlAccessUuid-live'],
+  config['hostingStack'].useS3TfState
 );
 
 ////the blueGreenToggleStack is infrastructure for simplifying Blue/Green domain name switching via the config['hostingStack'].currentLiveStack setting
@@ -167,7 +173,8 @@ new BlueGreenToggleStack(
   config['hostingStack'].graphqlApiUrl,
   config['hostingStack'].hostedZone,
   backendStateS3BucketName,
-  config['dataStack'].stripe['webhookEndpointSubdomain-live']
+  config['dataStack'].stripe['webhookEndpointSubdomain-live'],
+  config['hostingStack'].useS3TfState
 )
 
 

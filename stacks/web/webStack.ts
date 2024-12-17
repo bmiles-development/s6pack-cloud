@@ -56,15 +56,18 @@ export class WebStack extends TerraformStack {
         stripeToken:string, 
         contactUsEmailAddress:string, 
         freePlanDBKey:string,
-        cloudFrontLambdaUrlAccessUuid:string
+        cloudFrontLambdaUrlAccessUuid:string,
+        useS3TfState:boolean
       //  stripeWebhooksIpList:string[] = [] 
     ){
       super(scope, stackName);
-      new S3Backend(this, {
-        bucket: backendStateS3BucketName,
-        key: stackName,
-        region: region
-      })
+      if(useS3TfState){
+        new S3Backend(this, {
+          bucket: backendStateS3BucketName,
+          key: stackName,
+          region: region
+        })
+      }
   
       /* resources */
       this._config = config
