@@ -44,6 +44,7 @@ export class Lambda extends Construct{
     const filename = join(workingDir,"index.js")
     const zipFilename = join(tmpFolderName,"",name+".zip")
     
+    //TODO: use dir instead: https://registry.terraform.io/providers/hashicorp/archive/latest/docs/data-sources/file
     exec('cd '+workingDir+' && mkdir -p '+tmpFolderName+' && zip '+zipFilename+' '+filename+' -j', (err, _stdout, _stderr) => {
     
       if (err !== null) {
