@@ -1,10 +1,8 @@
-import { exec } from "child_process"
 import { Construct } from "constructs"
 import { ArchiveProvider } from "@cdktf/provider-archive/lib/provider"
 import {LambdaFunction} from '@cdktf/provider-aws/lib/lambda-function'
 import {DataArchiveFile} from '@cdktf/provider-archive/lib/data-archive-file'
 import { join } from 'path'
-import { tmpdir } from "os"
 import { LambdaPermission } from '@cdktf/provider-aws/lib/lambda-permission';
 
 export class Lambda extends Construct{
@@ -14,7 +12,6 @@ export class Lambda extends Construct{
   protected _stackName: any
   protected _defaultEnvVars: any 
   protected _cloudwatchResource: any
-  private _tmpFolderName = "S5P"
   public get lambdas(){
       return this._lambdas
   }
@@ -40,23 +37,8 @@ export class Lambda extends Construct{
 
   public CreateLambdaNodeJsFunction(name:string, workingDir:string, envVars: any, layerArns:string[] = [], iamServiceRoleOverrideArn:any = null, runtime = "nodejs18.x"): any{
     workingDir = join(workingDir,name)
-    const tmpFolderName = join(tmpdir(),this._tmpFolderName)
     const filename = join(workingDir,"index.js")
-    const zipFilename = join(tmpFolderName,"",name+".zip")
-    
-    //TODO: use dir instead: https://registry.terraform.io/providers/hashicorp/archive/latest/docs/data-sources/file
-    exec('cd '+workingDir+' && mkdir -p '+tmpFolderName+' && zip '+zipFilename+' '+filename+' -j', (err, _stdout, _stderr) => {
-    
-      if (err !== null) {
-        console.log("internal error:")
-        console.log(err)
-        console.log(_stderr)
-        console.log(_stdout)
-        throw new Error("failed to zip node.js lambdas")
-      } else {
-          //console.log("success go build and zip "+zipFilename)
-      }
-    });
+    const zipFilename = name+".zip"
 
     var dataArchive = new DataArchiveFile(this,name+"_data_archive",{
       type: "zip",
@@ -91,40 +73,13 @@ export class Lambda extends Construct{
       functionName: this._stackName+"-"+name,
       principal: "cognito-idp.amazonaws.com"
     })
-
-    exec('rm -fR '+join(tmpdir(),tmpFolderName), (err, _stdout, _stderr) => {
-      if (err !== null) {
-        console.log("internal error:")
-        console.log(err)
-        console.log(_stderr)
-        console.log(_stdout)
-        throw new Error("failed to delete tmp files")
-      } else {
-          //console.log("success go build and zip "+zipFilename)
-      }
-    })
-
     return this._lambdas[name].arn
   }
 
   public CreateEdgeLambdaNodeJsFunction(awsEastProvider:any, name:string, workingDir:string, layerArns:string[] = [], iamServiceRoleOverrideArn:any = null, runtime = "nodejs18.x"): any{
     workingDir = join(workingDir,name)
-    const tmpFolderName = join(tmpdir(),this._tmpFolderName)
     const filename = join(workingDir,"index.js")
-    const zipFilename = join(tmpFolderName,"",name+".zip")
-    
-    exec('cd '+workingDir+' && mkdir -p '+tmpFolderName+' && zip '+zipFilename+' '+filename+' -j', (err, _stdout, _stderr) => {
-    
-      if (err !== null) {
-        console.log("internal error:")
-        console.log(err)
-        console.log(_stderr)
-        console.log(_stdout)
-        throw new Error("failed to zip node.js lambdas")
-      } else {
-          //console.log("success go build and zip "+zipFilename)
-      }
-    });
+    const zipFilename = name+".zip"
 
     var dataArchive = new DataArchiveFile(this,name+"_data_archive",{
       type: "zip",
@@ -159,40 +114,15 @@ export class Lambda extends Construct{
       principal: "cognito-idp.amazonaws.com"
     })
 
-    exec('rm -fR '+join(tmpdir(),tmpFolderName), (err, _stdout, _stderr) => {
-      if (err !== null) {
-        console.log("internal error:")
-        console.log(err)
-        console.log(_stderr)
-        console.log(_stdout)
-        throw new Error("failed to delete tmp files")
-      } else {
-          //console.log("success go build and zip "+zipFilename)
-      }
-    })
-
     return this._lambdas[name].qualifiedArn
   }
 
 
   public CreateStripeWebhookValidationFunction(stackName:string, workingDir:string, name: string, stripeWebhookSecret:string, isDev:boolean, iamServiceRoleArn:any): any {
-    const tmpFolderName = join(tmpdir(),this._tmpFolderName)
     const filename = "app.py"
-    const zipFilename = join(tmpFolderName,"",name+".zip")
+    const zipFilename = name+".zip"
     workingDir = join(workingDir, name)
-    exec('cd '+workingDir+' && mkdir -p '+tmpFolderName+' && zip '+zipFilename+' '+filename+' -j', (err, _stdout, _stderr) => {
-    
-      if (err !== null) {
-        console.log("internal error:")
-        console.log(err)
-        console.log(_stderr)
-        console.log(_stdout)
-        throw new Error("failed to zip node.js lambdas")
-      } else {
-          //console.log("success go build and zip "+zipFilename)
-      }
-    });
-
+   
     const type = isDev ? 'dev': 'live'
     var dataArchive = new DataArchiveFile(this,name+type+"_webhooklambda_archive",{
       type: "zip",
@@ -219,18 +149,6 @@ export class Lambda extends Construct{
     })
 
     this._lambdas[name].functionName = functionName
-  
-    exec('rm -fR '+join(tmpdir(),tmpFolderName), (err, _stdout, _stderr) => {
-      if (err !== null) {
-        console.log("internal error:")
-        console.log(err)
-        console.log(_stderr)
-        console.log(_stdout)
-        throw new Error("failed to delete tmp files")
-      } else {
-          //console.log("success go build and zip "+zipFilename)
-      }
-    });
     return this._lambdas[name].arn
   }
 
