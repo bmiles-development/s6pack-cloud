@@ -33,15 +33,10 @@ export class Cloudfront extends Construct {
                 }
             }],
             defaultCacheBehavior: {
+                cachePolicyId: "658327ea-f89d-4fab-a63d-7e88639e58f6",
                 allowedMethods: ["GET", "HEAD"],
                 cachedMethods: ["GET", "HEAD"],
                 targetOriginId: originId,
-                forwardedValues: {
-                    queryString : true,
-                    cookies: {
-                        forward:"none"
-                    }
-                },
                 viewerProtocolPolicy: "redirect-to-https"
             },
             restrictions: {
@@ -62,58 +57,5 @@ export class Cloudfront extends Construct {
         }
 
         return this._cloudfrontDistributions[name] = new CloudfrontDistribution(this, name+"_cloudfront", config)
-    }
-
-    public newLambdaURLDistribution(name:string, websiteDomainName:any, acmCertArn:any, originId:string, loggingBucket:any, aliases:any, customHeaderLambdaAccessKey:string, lambdaCloudfronViewerRequestArn:any){
-
-        return this._cloudfrontDistributions[name] = new CloudfrontDistribution(this, name+"_lambdaUrlCloudfront",{
-            enabled : true,
-            aliases: aliases, //add domainApexName for toggling apex name to blue/green
-            origin: [{
-                originId: originId, 
-                domainName: websiteDomainName,
-                customOriginConfig: {
-                    httpPort: 80,
-                    httpsPort: 443,
-                    originProtocolPolicy: "https-only",
-                    originSslProtocols:["TLSv1.2"]
-                },
-                customHeader: [{
-                    name: "Lambda-url-access",
-                    value: customHeaderLambdaAccessKey
-                }]
-            }],
-            defaultCacheBehavior: {
-                lambdaFunctionAssociation: [
-                    {
-                      eventType: "viewer-request",
-                      includeBody: false,
-                      lambdaArn: lambdaCloudfronViewerRequestArn
-                    },
-                  ],
-                originRequestPolicyId: "b689b0a8-53d0-40ab-baf2-68738e2966ac", // https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/using-managed-origin-request-policies.html
-                cachePolicyId: "4135ea2d-6df8-44a3-9df3-4b5a84be39ad", // https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/using-managed-cache-policies.html
-                allowedMethods: ["HEAD", "DELETE", "POST", "GET", "OPTIONS", "PUT", "PATCH"],
-                cachedMethods: ["GET", "HEAD"],
-                targetOriginId: originId,
-                viewerProtocolPolicy: "redirect-to-https"
-            },
-            restrictions: {
-                geoRestriction: {
-                    restrictionType: "none"
-                }
-            },
-            viewerCertificate: {
-                acmCertificateArn: acmCertArn,
-                sslSupportMethod: "sni-only"
-            },
-            
-            loggingConfig: {
-                bucket: loggingBucket,
-                prefix: websiteDomainName+"/cloudfront-logs"
-            }
-        } )
-    
-
     }
 }

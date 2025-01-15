@@ -1,6 +1,5 @@
 const graphqlEndpoint = process.env.GRAPHQL_API_ENDPOINT; //'https://yourappsyncapiendpoint.appsync-api.us-west-2.amazonaws.com/graphql';
 const region = process.env.REGION;
-const lambdaUrlAccessUUID = process.env.LAMBDA_URL_ACCESS_UUID;
 
 const https = require("https");
 const aws4 = require("aws4");
@@ -8,18 +7,9 @@ const url = require("url");
 const graphqlEndpointParsed = url.parse(graphqlEndpoint, true);
 
 exports.handler = async (event) => {
-  // Since Clodfront AWS_IAM cannot forward POST requests to lambda url, we can pass a 
-  // header unique "lambda-url-access" to this lambda and then we can isolate traffic through the cloudfront endpoint only 
 
-  if(event.headers["lambda-url-access"] != lambdaUrlAccessUUID ){
-    return {
-      statusCode: 403,
-      body: "Forbidden",
-    };
-  }
   let itemBody = {};
   let eventBody = JSON.parse(event.body);
-
 
   switch (eventBody["type"]) {
     case "customer.subscription.deleted":

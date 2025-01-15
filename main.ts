@@ -108,7 +108,6 @@ webStacks[config['webStackDev'].name] = new WebStack(
   hostingStack.ssmResource.parameters["stripeToken-dev"],
   hostingStack.ssmResource.parameters['contactUsEmail-dev'],
   "dev_free_plan",
-  hostingStack.ssmResource.parameters['cloudfrontLambdaUrlAccessUuid-dev'],
   config['hostingStack'].useS3TfState
 );
 
@@ -125,7 +124,6 @@ webStacks[config['webStackGreen'].name] = new WebStack(
   hostingStack.ssmResource.parameters["stripeToken-live"],
   hostingStack.ssmResource.parameters["contactUsEmail-live"],
   "live_free_plan",
-  hostingStack.ssmResource.parameters['cloudfrontLambdaUrlAccessUuid-live'],
   config['hostingStack'].useS3TfState
 );
 
@@ -142,7 +140,6 @@ webStacks[config['webStackBlue'].name] = new WebStack(
   hostingStack.ssmResource.parameters["stripeToken-live"],
   hostingStack.ssmResource.parameters["contactUsEmail-live"],
   "live_free_plan",
-  hostingStack.ssmResource.parameters['cloudfrontLambdaUrlAccessUuid-live'],
   config['hostingStack'].useS3TfState
 );
 

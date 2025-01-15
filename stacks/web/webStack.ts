@@ -4,7 +4,8 @@ import { CloudwatchQueryDefinition } from '@cdktf/provider-aws/lib/cloudwatch-qu
 import { LambdaLayers } from '../sharedResources/infrastructure/aws/lambdaLayers'
 import { Lambda } from '../sharedResources/infrastructure/aws/lambda'
 import { StepFunctions } from "../sharedResources/infrastructure/aws/stepFunctions"
-import { Cloudfront } from '../sharedResources/infrastructure/aws/cloudfront'
+import { Cloudfront } from "./infrastructure/aws/cloudfront"
+import {Cloudfront as SharedCloudfront} from "../sharedResources/infrastructure/aws/cloudfront"
 import { StripeProvider } from "../../.gen/providers/stripe/provider"
 import { Appsync } from "./infrastructure/aws/appsync"
 import { S3 } from "../sharedResources/infrastructure/aws/s3"
@@ -56,7 +57,6 @@ export class WebStack extends TerraformStack {
         stripeToken:string, 
         contactUsEmailAddress:string, 
         freePlanDBKey:string,
-        cloudFrontLambdaUrlAccessUuid:string,
         useS3TfState:boolean
       //  stripeWebhooksIpList:string[] = [] 
     ){
@@ -117,11 +117,10 @@ export class WebStack extends TerraformStack {
       iamResource.addAppsyncAccessPolicyToLambdaRole(stackName, region, accountId, this._appsyncResource.graphqlApi.id, ['cancelPlanPeriodEndedWebhook']);
       envVars =  lambdaResource.defaultEnvVars
       envVars.GRAPHQL_API_ENDPOINT = 'https://'+config.appsyncDomainName+'/graphql';
-      envVars.LAMBDA_URL_ACCESS_UUID = cloudFrontLambdaUrlAccessUuid
       const queryAppsyncGatewayFunctionArn = lambdaResource.CreateLambdaNodeJsFunction("queryAppsyncGatewayFunction", join(stackPath,"interface", "gateway-lambdaUrl"), envVars, lambdaLayersArns, iamResource.roles['webhookGatewayLambda'].arn)
       const cloudfrontViewerRequestIpAllowFunctionArn = lambdaResource.CreateEdgeLambdaNodeJsFunction(awsUsEast1Provider, "cloudfrontViewerRequestIpAllowFunction", join(stackPath,"interface", "gateway-lambdaUrl"), [], iamResource.roles['lambdaServiceRole'].arn)
 
-      const gatewayFunctionUrlResource = new LambdaFunctionUrl(this, "stripeWebhookGatewayLambdaFunctionUrl",{functionName : queryAppsyncGatewayFunctionArn, authorizationType : "NONE"}) 
+      const gatewayFunctionUrlResource = new LambdaFunctionUrl(this, "stripeWebhookGatewayLambdaFunctionUrl",{functionName : queryAppsyncGatewayFunctionArn, authorizationType : "AWS_IAM"}) 
       const webhookFunctionUrlDomain = gatewayFunctionUrlResource.urlId+".lambda-url."+region+".on.aws"
       
       // hosting, logging, waf section - maybe move to a separate stack
@@ -135,7 +134,6 @@ export class WebStack extends TerraformStack {
         gatewayFunctionUrlResource.urlId, 
         hostingStack.s3Resource.s3CloudfrontLoggingBucket.bucketDomainName, 
         [this._webhookDomainName],
-        cloudFrontLambdaUrlAccessUuid,
         cloudfrontViewerRequestIpAllowFunctionArn
       )
       
@@ -177,7 +175,8 @@ export class WebStack extends TerraformStack {
       
       // you may need to deploy twice when modifying DNS records below since an error will occur on first 
       // deployment due to a delete-record/create-record timing issue.
-      cloudfront.newDistribution(
+      const sharedCloudfront:SharedCloudfront = new SharedCloudfront(this, stackName+"webhosting")
+      sharedCloudfront.newDistribution(
         'staticWebhosting', 
         config.s3WebsiteDomainName+"."+this._s3WebsiteBucketDomain, 
         hostingStack.acmResource.certificates["appsyncSslCert"].arn, 
@@ -185,7 +184,7 @@ export class WebStack extends TerraformStack {
         hostingStack.s3Resource.s3CloudfrontLoggingBucket.bucketDomainName, 
         [config.s3WebsiteDomainName]
       )
-      route53.addS3CloudfrontDomainRoute53Record( config.s3WebsiteDomainName, cloudfront.cloudfrontDistributions['staticWebhosting'].domainName, hostingStack.hostedZoneResource.zone.id, cloudfront.cloudfrontDistributions['staticWebhosting'].hostedZoneId)
+      route53.addS3CloudfrontDomainRoute53Record( config.s3WebsiteDomainName, sharedCloudfront.cloudfrontDistributions['staticWebhosting'].domainName, hostingStack.hostedZoneResource.zone.id, sharedCloudfront.cloudfrontDistributions['staticWebhosting'].hostedZoneId)
       new TerraformOutput(this, 'acmSslCertArn', { value: hostingStack.acmResource.certificates["appsyncSslCert"].arn})
       //TODO point S3 cloudfront logs to athena database
 
