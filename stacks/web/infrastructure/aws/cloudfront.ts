@@ -15,8 +15,8 @@ export class Cloudfront extends Construct {
 
     //move this into a new cloudfront.ts file in stacks/web/infrastructure. It's only used in the webStack.
     public newLambdaURLDistribution(name:string, websiteDomainName:any, acmCertArn:any, originId:string, loggingBucket:any, aliases:any, lambdaCloudfronViewerRequestArn:any){
-        const originAccessControl = new CloudfrontOriginAccessControl(this, "LambdaOriginAccessControl", {
-            name: "lambdaOriginAccessControl",
+        const originAccessControl = new CloudfrontOriginAccessControl(this, name+"-LambdaOriginAccessControl", {
+            name: name+"-lambdaOriginAccessControl",
             originAccessControlOriginType: "lambda",
             signingBehavior: "always",
             signingProtocol: "sigv4",
