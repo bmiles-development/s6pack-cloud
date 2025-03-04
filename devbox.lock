@@ -4,6 +4,54 @@
     "github:NixOS/nixpkgs/nixpkgs-unstable": {
       "resolved": "github:NixOS/nixpkgs/3a05eebede89661660945da1f151959900903b6a?lastModified=1740547748&narHash=sha256-Ly2fBL1LscV%2BKyCqPRufUBuiw%2BzmWrlJzpWOWbahplg%3D"
     },
+    "nodePackages.cdktf-cli@latest": {
+      "last_modified": "2025-02-26T05:29:08Z",
+      "resolved": "github:NixOS/nixpkgs/3a05eebede89661660945da1f151959900903b6a#nodePackages.cdktf-cli",
+      "source": "devbox-search",
+      "version": "0.20.11",
+      "systems": {
+        "aarch64-darwin": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/4m3yyawwrs2as6jqd6xmcwhq4vp8qhhk-cdktf-cli-0.20.11",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/4m3yyawwrs2as6jqd6xmcwhq4vp8qhhk-cdktf-cli-0.20.11"
+        },
+        "aarch64-linux": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/zgwmb421p3lsqlnqn2yabgy9pyg13c88-cdktf-cli-0.20.11",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/zgwmb421p3lsqlnqn2yabgy9pyg13c88-cdktf-cli-0.20.11"
+        },
+        "x86_64-darwin": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/qp108gg457sgg9frcmhdm9wmsbjr3p1y-cdktf-cli-0.20.11",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/qp108gg457sgg9frcmhdm9wmsbjr3p1y-cdktf-cli-0.20.11"
+        },
+        "x86_64-linux": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/wpqfym9jn31yvsdw9rvw8fb41skaq7bm-cdktf-cli-0.20.11",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/wpqfym9jn31yvsdw9rvw8fb41skaq7bm-cdktf-cli-0.20.11"
+        }
+      }
+    },
     "nodejs@23.8.0": {
       "last_modified": "2025-02-17T23:19:04Z",
       "plugin_version": "0.0.2",

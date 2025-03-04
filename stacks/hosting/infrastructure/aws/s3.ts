@@ -46,9 +46,9 @@ export class S3 extends Construct {
             bucket: this._s3CloudfrontLoggingBucket.id,
             rule: [{
               id: "logs",
-              expiration: {
+              expiration: [{
                 days: logRetentionDays
-              },
+              }],
               status: "Enabled"
             }]
         }) 
