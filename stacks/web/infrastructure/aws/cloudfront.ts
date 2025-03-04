@@ -14,14 +14,14 @@ export class Cloudfront extends Construct {
     }
 
     //move this into a new cloudfront.ts file in stacks/web/infrastructure. It's only used in the webStack.
-    public newLambdaURLDistribution(name:string, websiteDomainName:any, acmCertArn:any, originId:string, loggingBucket:any, aliases:any, lambdaCloudfronViewerRequestArn:any){
+    public newLambdaURLDistribution(name:string, cloudfrontKey:string, websiteDomainName:any, acmCertArn:any, originId:string, loggingBucket:any, aliases:any, lambdaCloudfronViewerRequestArn:any){
         const originAccessControl = new CloudfrontOriginAccessControl(this, name+"-LambdaOriginAccessControl", {
             name: name+"-lambdaOriginAccessControl",
             originAccessControlOriginType: "lambda",
             signingBehavior: "always",
             signingProtocol: "sigv4",
         });
-        return this._cloudfrontDistributions[name] = new CloudfrontDistribution(this, name+"_lambdaUrlCloudfront",{
+        return this._cloudfrontDistributions[cloudfrontKey] = new CloudfrontDistribution(this, name+"_lambdaUrlCloudfront",{
             enabled : true,
             aliases: aliases, //add domainApexName for toggling apex name to blue/green
             origin: [{

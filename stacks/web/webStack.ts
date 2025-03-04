@@ -128,6 +128,7 @@ export class WebStack extends TerraformStack {
       this._webhookDomainName = webhookSubdomainName+"."+hostingStack.hostedZoneResource.hostedZone
 
       const webhookDistribution = cloudfront.newLambdaURLDistribution(
+        stackName,
         "webhookUrl", 
         webhookFunctionUrlDomain,  
         hostingStack.acmResource.certificates["appsyncSslCert"].arn, 
