@@ -35,7 +35,7 @@ export class Lambda extends Construct{
 
   }
 
-  public CreateLambdaNodeJsFunction(name:string, workingDir:string, envVars: any, layerArns:string[] = [], iamServiceRoleOverrideArn:any = null, runtime = "nodejs18.x"): any{
+  public CreateLambdaNodeJsFunction(name:string, workingDir:string, envVars: any, layerArns:string[] = [], iamServiceRoleOverrideArn:any = null, runtime = "nodejs20.x"): any{
     workingDir = join(workingDir,name)
     const filename = join(workingDir,"index.js")
     const zipFilename = name+".zip"
@@ -76,7 +76,7 @@ export class Lambda extends Construct{
     return this._lambdas[name].arn
   }
 
-  public CreateEdgeLambdaNodeJsFunction(awsEastProvider:any, name:string, workingDir:string, layerArns:string[] = [], iamServiceRoleOverrideArn:any = null, runtime = "nodejs18.x"): any{
+  public CreateEdgeLambdaNodeJsFunction(awsEastProvider:any, name:string, workingDir:string, layerArns:string[] = [], iamServiceRoleOverrideArn:any = null, runtime = "nodejs20.x"): any{
     workingDir = join(workingDir,name)
     const filename = join(workingDir,"index.js")
     const zipFilename = name+".zip"
