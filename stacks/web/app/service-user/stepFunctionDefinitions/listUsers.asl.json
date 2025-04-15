@@ -53,7 +53,8 @@
                         "Next": "Pass",
                         "Parameters": {
                             "Email.$": "$.Attributes[?(@.Name == email)].Value",
-                            "Id.$": "$.Attributes[?(@.Name == sub)].Value"
+                            "Id.$": "$.Attributes[?(@.Name == sub)].Value",
+                            "Name.$": "$.Attributes[?(@.Name == name)].Value"
                         },
                         "ResultPath": "$.AttributesUnwound"
                     },
@@ -69,7 +70,7 @@
                             "created.$": "$.UserCreateDate",
                             "modified.$": "$.UserLastModifiedDate",
                             "status.$": "$.UserStatus",
-                            "tenantId.$": "$.TenantId"
+                            "tenantId.$": "$.AttributesUnwound.Name[0]"
                         }
                     }
                 }

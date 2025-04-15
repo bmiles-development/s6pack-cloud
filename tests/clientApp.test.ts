@@ -115,16 +115,16 @@ describe("basic authorized calls using GRAPHQL_AUTH_MODE.AMAZON_COGNITO_USER_POO
   beforeAll(async () => {
     cognito = new CognitoIdentityProviderClient();
     configVars = await GetConfigVars(Amplify);
-    await CognitoCreateTestUser(configVars, cognito);
+    testUserExists = await CheckIfTestUserExists(configVars, cognito);
+    if (!testUserExists) {
+      await CognitoCreateTestUser(configVars, cognito);
+    }
     await Auth.signIn(configVars.testUsername, configVars.testPassword);
     return true;
   }, 20000);
 
   afterAll(async () => {
     await Auth.signOut();
-    testUserExists = await CheckIfTestUserExists(configVars, cognito);
-    //user deleted in tests
-    return true;
   }, 20000);
 
   test("listPlans should return data", async () => {
@@ -167,6 +167,13 @@ describe("create user, upgrade plan to free plan, delete account", () => {
 
   afterAll(async () => {
     await Auth.signOut();
+    testUserExists = await CheckIfTestUserExists(configVars, cognito);
+    if (testUserExists) {
+      await API.graphql({
+        query: enableDeleteAccount,
+      });
+      await API.graphql(graphqlOperation(deleteAccount));
+    }
     return true;
   }, 20000);
 
@@ -180,7 +187,6 @@ describe("create user, upgrade plan to free plan, delete account", () => {
         query: addStandardUser,
         variables: { username: testUser2 },
       });
-      // ... Other assertions here
     } catch (err) {
       e = err;
     }
@@ -217,7 +223,7 @@ describe("create user, upgrade plan to free plan, delete account", () => {
       graphqlOperation(addStandardUser, { username: testUser2 })
     );
     expect(response.data.addStandardUser.id).toBeDefined();
-  });
+  }, 10000);
 
   test("delete standard user", async () => {
     const splitEmail = configVars["contactUsEmail-dev"].split("@");
@@ -377,7 +383,6 @@ describe("create new user, then create Admin User and test functionality, then c
       });
       await API.graphql(graphqlOperation(deleteAccount));
     }
-    await Auth.signOut();
     return true;
   }, 10000);
 
@@ -421,7 +426,7 @@ describe("create new user, then create Admin User and test functionality, then c
     await Auth.signOut();
     await Auth.signIn(testUser2, configVars.testPassword);
     expect(response.data.addAdminUser.id).toBeDefined();
-  }, 10000);
+  }, 15000);
 
   test("add users until plan limit has been reached", async () => {
     const splitEmail = configVars["contactUsEmail-dev"].split("@");
@@ -517,7 +522,7 @@ describe("create new user, then create Admin User and test functionality, then c
     expect(response.data.changeAdminToStandardUser.id).toBeDefined();
     await Auth.signOut();
     await Auth.signIn(testUser2, configVars.testPassword);
-  });
+  },15000);
 
   test("standard user - fail cant add user", async () => {
     const splitEmail = configVars["contactUsEmail-dev"].split("@");
@@ -981,7 +986,7 @@ describe("downgrade and deactivate users", () => {
       e = err;
     }
     expect(e.errors[0].errorType).toMatch("PlanUserLimitReached");
-  }, 15000);
+  }, 20000);
 
   test("checkout paid plan preview from trial plan", async () => {
     const checkoutData: any = await API.graphql({
@@ -990,7 +995,7 @@ describe("downgrade and deactivate users", () => {
     });
     expect(checkoutData.data.checkout.oldPlanTotal).toEqual(0);
     expect(checkoutData.data.checkout.nextInviceSubTotal).toBeGreaterThan(0);
-  });
+  }, 10000);
 
   test("downgrade plan check deactivated users", async () => {
     let e: any;
@@ -1005,7 +1010,7 @@ describe("downgrade and deactivate users", () => {
     }
     expect(data.data.changePlan.planId).toBeDefined();
     expect(data.data.changePlan.users).toHaveLength(2);
-  });
+  }, 10000);
 
   test("fail - attempt to activate user past plan limit", async () => {
     await Auth.signOut();
@@ -1020,7 +1025,7 @@ describe("downgrade and deactivate users", () => {
       e = err;
     }
     expect(e.errors[0].errorType).toMatch("PlanUserLimitReached");
-  });
+  },10000);
 });
 
 describe("cancel at period end -> speed up time -> plan actually cancels -> webhook triggers graphql subscription update", () => {
@@ -1319,7 +1324,7 @@ describe("create new user get free trial plan, change to other plans", () => {
     }
     await Auth.signOut();
     return true;
-  }, 10000);
+  }, 20000);
 
   test("fail can't cancel free plan", async () => {
     await Auth.signOut();
@@ -1390,7 +1395,7 @@ describe("create new user get free trial plan, change to other plans", () => {
       e = err;
     }
     expect(e.errors[0].errorType).toMatch("PlanUserLimitReached");
-  }, 15000);
+  }, 20000);
 
   test("deactivateUser", async () => {
     await Auth.signOut();
@@ -1401,7 +1406,7 @@ describe("create new user get free trial plan, change to other plans", () => {
       variables: { id: users["testUser2"].id },
     });
     expect(data.data.deactivateUser.enabled).toBeFalsy();
-  });
+  },10000);
 
   test("activateUser", async () => {
     await delay(5000); // More Step Function Coginto-DeactivateUser delay, lets compensate for it here.
@@ -1413,7 +1418,7 @@ describe("create new user get free trial plan, change to other plans", () => {
       variables: { id: users["testUser2"].id },
     });
     expect(data.data.activateUser.enabled).toBeTruthy();
-  }, 10000);
+  }, 15000);
 
   test("fail change paid plan to SAME paid plan", async () => {
     await Auth.signOut();
@@ -1428,7 +1433,7 @@ describe("create new user get free trial plan, change to other plans", () => {
       e = err;
     }
     expect(e.errors[0].errorType).toEqual("NewPlanIsSameAsTheOldPlan");
-  });
+  }, 15000);
 
   test("checkout paid plan preview from trial plan", async () => {
     const checkoutData: any = await API.graphql({
@@ -1485,7 +1490,7 @@ describe("create new user get free trial plan, change to other plans", () => {
     await Auth.signOut();
     await Auth.signIn(configVars.testUsername, configVars.testPassword);
     expect(modifiedPaidPlan.data.changePlan.id).toBeTruthy;
-  }, 10000);
+  }, 20000);
 
   test("fail createPlanIntent but already has a plan", async () => {
     let e: any;

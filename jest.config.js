@@ -108,7 +108,7 @@ module.exports = {
   // restoreMocks: false,
 
   // The root directory that Jest should scan for tests and modules within
-   rootDir: "/home/bp/go/src/github.com/bmiles-development/saas-starterpack/backend",
+   rootDir: "/home/bp/go/src/github.com/bmiles-development/stations/cloud",
 
   // A list of paths to directories that Jest should use to search for files in
    roots: [
@@ -170,7 +170,7 @@ module.exports = {
 
   // An array of regexp pattern strings that are matched against all source file paths, matched files will skip transformation
    transformIgnorePatterns: [
-     "/home/bp/go/src/github.com/bmiles-development/saas-starterpack/backend/stacks/web/app/tests/*"
+     "/home/bp/go/src/github.com/bmiles-development/nodejs20/backend/stacks/web/app/tests/*"
    ],
 
   // An array of regexp pattern strings that are matched against all modules before the module loader will automatically return a mock for them

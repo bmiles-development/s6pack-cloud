@@ -94,7 +94,6 @@ export async function GetConfigVars(Amplify) {
     "testCognitoClientId",
     "testFreeTrialPlanId",
     "testPaidPlanId",
-    "testFreeTrialPlanId",
     "testIdentityPoolId",
     "contactUsEmail-dev",
   ];
